@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AppCompat / Material を入れずに済むようプラットフォームのテーマを使う。起動直後の白画面を避けるため背景は黒。 -->
+    <style name="Theme.FoldBerry" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+</resources>

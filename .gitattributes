@@ -1,0 +1,18 @@
+# 既定はテキストとして正規化し、リポジトリ内は LF で保持する
+* text=auto eol=lf
+
+# コンテナ内の sh から実行するものは必ず LF(CRLF だと bad interpreter で落ちる)
+gradlew       text eol=lf
+*.sh          text eol=lf
+Dockerfile    text eol=lf
+
+# Windows 側でのみ使うものは CRLF
+*.bat         text eol=crlf
+*.cmd         text eol=crlf
+
+# バイナリは一切変換しない
+*.jar         binary
+*.jks         binary
+*.apk         binary
+*.png         binary
+*.webp        binary

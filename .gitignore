@@ -1,0 +1,36 @@
+# 署名鍵とパスワード(仕様書 §11.2 / §14 Critical)。別途手動でバックアップすること
+/keystore/*
+!/keystore/.gitkeep
+.env
+
+# ビルド成果物とログ、作業用一時ファイル
+# APK はコミットせず、GitHub Release に FoldBerry.apk の名前で添付して配る
+/dist/
+/logs/*
+!/logs/.gitkeep
+/tmp/*
+!/tmp/.gitkeep
+
+# Gradle / Android のビルド中間物
+.gradle/
+.kotlin/
+build/
+local.properties
+*.hprof
+captures/
+
+# OS / エディタ
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Playwright MCP の作業ログ(UI 検証時に自動生成)
+.playwright-mcp/
+
+# 公開リポジトリに含めない資料と作業記録(ローカルのみ)
+# docs/ = 仕様書・モック・参考画像(参考画像は他社の製品写真・ロゴを含むため配布しない)
+/docs/
+# Claude Code の設定と記憶、/fin のセッション要約、レビュー結果
+/.claude/
+/context/
+/review/

@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 画面に出す文字列(既定=日本語)。英語は values-en/strings.xml。言語は設定シートで切り替える(§8。2026-11-17 追加)。 -->
+<resources>
+    <string name="app_name" translatable="false">FoldBerry</string>
+
+    <!-- 共通 -->
+    <string name="common_loading">読み込み中…</string>
+    <string name="catalog_failed">アプリ一覧を取得できませんでした</string>
+    <string name="launch_failed">起動できませんでした</string>
+    <string name="app_not_found">%s は端末に見当たりません</string>
+    <string name="app_missing_label">(端末に無いアプリ)</string>
+    <string name="details_failed">アプリ情報を開けませんでした</string>
+    <string name="uninstall_failed">アンインストールの画面を開けませんでした</string>
+    <string name="dialer_failed">電話アプリを開けませんでした</string>
+    <string name="clock_failed">時計アプリを開けませんでした</string>
+
+    <!-- アプリ一覧・長押しメニュー -->
+    <string name="app_list_title">アプリ</string>
+    <string name="menu_assign_key">キーに割り当て</string>
+    <string name="menu_assign_key_desc">次に押したキーに割り当てます(端末の戻る操作で中止)</string>
+    <string name="menu_details">アプリ情報</string>
+    <string name="menu_details_desc">端末のアプリ情報画面を開きます</string>
+    <string name="menu_uninstall">アンインストール</string>
+    <string name="menu_uninstall_desc">確認のあと端末から削除します</string>
+    <string name="menu_uninstall_disabled_desc">このアプリは削除できません(端末に組み込まれたアプリ、または端末の管理で禁止)</string>
+
+    <!-- 割り当て -->
+    <string name="assign_key_title">%sに割り当て</string>
+    <string name="assign_dock_camera_title">カメラの枠に割り当て</string>
+    <string name="assign_main_slot_title">ホームの枠 %d に割り当て</string>
+    <string name="main_slot_name">ホームの枠 %d</string>
+    <string name="assign_filter_hint">アプリ名で絞り込み</string>
+    <string name="assign_clear">割り当て解除</string>
+    <string name="assign_no_match">該当するアプリがありません</string>
+    <string name="key_assigned">%1$sに %2$s を割り当てました</string>
+    <string name="pick_prompt">%s を割り当てるキーを押してください</string>
+    <string name="pick_cancel_hint">端末の戻る操作で中止</string>
+    <string name="pick_cancel">中止</string>
+    <string name="height_short">高さ不足: 必要 %1$sdp / 実際 %2$sdp</string>
+
+    <!-- キーの呼び名(§7)。KeyLayout.displayName と同じ文言(純粋層はテスト用に日本語のまま持つ) -->
+    <string name="key_name">%s キー</string>
+    <string name="key_backspace">Backspace キー</string>
+    <string name="key_alt">alt キー</string>
+    <string name="key_dollar">$ キー</string>
+    <string name="key_enter">Enter キー</string>
+    <string name="key_left_shift">左 shift キー</string>
+    <string name="key_right_shift">右 shift キー</string>
+    <string name="key_zero">0・マイク キー</string>
+    <string name="key_space">スペースキー</string>
+    <string name="key_sym">sym キー</string>
+    <string name="key_fn_send">送話キー</string>
+    <string name="key_fn_menu">BBメニューキー</string>
+    <string name="key_fn_trackpad">トラックパッド</string>
+    <string name="key_fn_back">戻るキー</string>
+    <string name="key_fn_end">終話キー</string>
+
+    <!-- 設定シート(§8) -->
+    <string name="settings_title">設定</string>
+    <string name="section_background">背景</string>
+    <string name="preset_aurora">オーロラ</string>
+    <string name="preset_berry">ベリー</string>
+    <string name="preset_graphite">グラファイト</string>
+    <string name="preset_abyss">深海</string>
+    <string name="photo">写真</string>
+    <string name="overlay_title">暗さ(時計とタイルを読みやすくする膜)</string>
+    <string name="section_language">言語</string>
+    <string name="date_style_standard">標準</string>
+    <string name="date_style_short">短縮</string>
+    <string name="date_style_year">年付き</string>
+    <string name="date_style_numeric">数字</string>
+    <string name="grayscale_title">割り当てアイコンをグレーにする</string>
+    <string name="grayscale_desc">キーと自由枠に出すアプリのアイコンを白黒で表示します</string>
+    <string name="section_status">ステータス行</string>
+    <string name="notif_access_title">通知の件数を表示</string>
+    <string name="notif_access_off">「通知へのアクセス」を許可すると、時計の横に不在着信・メール・SMS・その他の件数が出ます</string>
+    <string name="notif_access_on">許可済みです。止めるときも端末の設定から外します</string>
+    <string name="perm_title">Bluetooth・電波の表示</string>
+    <string name="perm_desc">アプリ情報の「権限」で、付近のデバイス・電話の許可を変えられます</string>
+    <string name="export_title">設定を書き出す</string>
+    <string name="export_desc">キー・自由枠の割り当てと、背景・時計・アイコン・触覚の設定をファイルに保存します(機種変更・再インストールに備えて)</string>
+    <string name="import_title">設定を読み込む</string>
+    <string name="import_desc">書き出したファイルから復元します。今の設定は置き換わります</string>
+    <plurals name="import_confirm_body">
+        <item quantity="other">このファイルの割り当て %d 件と、背景・時計・アイコン・触覚の設定で、今の設定を置き換えます。</item>
+    </plurals>
+    <string name="import_missing_unknown">アプリ一覧をまだ確認できていないため、端末に無いアプリは後で未割り当てに戻ります。</string>
+    <plurals name="import_missing">
+        <item quantity="other">端末に無いアプリ %d 件は未割り当てになります。</item>
+    </plurals>
+    <string name="import_replace">置き換える</string>
+    <string name="import_cancel">やめる</string>
+
+    <!-- 書出し/読込み・写真の結果 -->
+    <string name="export_done">設定を書き出しました</string>
+    <string name="export_failed">書き出せませんでした</string>
+    <string name="import_too_large">ファイルが大きすぎます。FoldBerry の設定ファイルではないようです</string>
+    <string name="import_read_failed">ファイルを読めませんでした</string>
+    <string name="import_invalid">FoldBerry の設定ファイルとして読めませんでした</string>
+    <string name="import_done">読み込みました</string>
+    <plurals name="import_done_missing">
+        <item quantity="other">読み込みました。端末に無いアプリ %d 件は未割り当てにしました</item>
+    </plurals>
+    <string name="import_photo_note">背景は写真でした。設定から写真を選び直してください</string>
+    <string name="photo_failed">写真を読み込めませんでした</string>
+
+    <!-- ステータス行(§4.1)の読み上げ -->
+    <!-- カバー画面のカレンダーと下の行(§4.3) -->
+    <string name="calendar_prev">前の月</string>
+    <string name="calendar_next">次の月</string>
+    <string name="quick_settings">端末の設定</string>
+    <string name="quick_settings_failed">設定を開けませんでした</string>
+    <string name="quick_this_month">今月を表示</string>
+    <string name="quick_home">ホームに戻る</string>
+    <string name="quick_light">ライト</string>
+    <string name="quick_light_failed">ライトを切り替えられませんでした(カメラの使用中など)</string>
+    <string name="quick_vibrate">マナーモード(通常/バイブ)</string>
+    <string name="quick_vibrate_failed">マナーモードを切り替えられませんでした(おやすみモード中など)</string>
+    <string name="quick_rotate">画面の自動回転</string>
+    <string name="quick_rotate_permission">「システム設定の変更」を許可すると、自動回転を切り替えられます</string>
+    <string name="quick_rotate_failed">自動回転を切り替えられませんでした</string>
+    <string name="quick_qr">QR コードを読み取る</string>
+    <string name="quick_qr_failed">QR コードの読み取り画面を開けませんでした</string>
+    <string name="dock_camera">カメラ(長押しで割り当て)</string>
+    <string name="camera_failed">カメラを開けませんでした</string>
+    <string name="dock_camera_name">カメラの枠</string>
+
+    <!-- 時計の横の種類別の通知(§4.2)の読み上げ -->
+    <plurals name="notif_missed_call">
+        <item quantity="other">不在着信 %d 件</item>
+    </plurals>
+    <plurals name="notif_email">
+        <item quantity="other">メール %d 件</item>
+    </plurals>
+    <plurals name="notif_sms">
+        <item quantity="other">SMS %d 件</item>
+    </plurals>
+    <plurals name="notif_other">
+        <item quantity="other">その他の通知 %d 件</item>
+    </plurals>
+    <string name="status_bluetooth_on">Bluetooth オン</string>
+    <string name="status_bluetooth_connected">Bluetooth 接続中</string>
+    <string name="status_vibrate">マナーモード(バイブ)</string>
+    <string name="status_silent">マナーモード(サイレント)</string>
+    <string name="status_charging">充電中</string>
+    <string name="status_open_notifications">通知パネルを開く</string>
+    <string name="status_open_notifications_failed">通知パネルを開けませんでした</string>
+    <string name="status_wifi_on">Wi-Fi 接続中</string>
+    <string name="status_wifi_on_gen">Wi-Fi %1$s 接続中</string>
+    <string name="status_signal">SIM %1$d の電波 %2$d/4</string>
+    <string name="status_signal_gen">SIM %1$d の電波 %2$d/4(%3$s)</string>
+    <!-- M7 の設定(v0.6.0) -->
+    <string name="assign_list_title">割り当て一覧</string>
+    <plurals name="assign_list_desc">
+        <item quantity="other">%d 件を割り当て中。個別の変更・解除と、すべて解除ができます</item>
+    </plurals>
+    <string name="assign_list_empty">キー・枠を長押しすると割り当てられます</string>
+    <string name="assign_list_change">変更</string>
+    <string name="assign_list_clear">解除</string>
+    <string name="assign_list_clear_all">すべて解除</string>
+    <plurals name="assign_list_clear_all_confirm">
+        <item quantity="other">%d 件の割り当てをすべて解除します。背景・時計などの設定はそのまま残ります。</item>
+    </plurals>
+    <string name="assign_list_clear_all_ok">解除する</string>
+    <string name="slot_main">ホームの枠 %d</string>
+    <string name="hour_format_system">端末に従う</string>
+    <string name="hour_format_12">12 時間</string>
+    <string name="hour_format_24">24 時間</string>
+    <string name="haptics_title">触覚フィードバック</string>
+    <string name="haptics_desc">キーに触れたときと長押しで振動します(端末の「タッチ時の振動」がオフなら振動しません)</string>
+    <string name="home_app_title">既定のホームアプリ</string>
+    <string name="home_app_desc">端末の設定画面で、ホームボタンで開くアプリを選びます</string>
+    <string name="version_with_build">%1$s・ビルド %2$s</string>
+    <!-- 案 C(v0.6.2): 設定の小見出し・行の題、割り当て一覧の群と件数、キートップの呼び名 -->
+    <string name="section_display">表示</string>
+    <string name="section_keyboard">キーボード</string>
+    <string name="section_system">システム</string>
+    <string name="hour_format_title">時刻の表記</string>
+    <string name="date_style_title">日付の書き方</string>
+    <string name="name_group_latin">A–Z</string>
+    <string name="name_group_other">#</string>
+    <string name="name_group_japanese">あ</string>
+    <plurals name="assign_list_group_count">
+        <item quantity="other">%d 個のアプリ</item>
+    </plurals>
+    <plurals name="assign_list_total">
+        <item quantity="other">%d 件</item>
+    </plurals>
+    <string name="slot_hint_main">ホームの枠</string>
+    <string name="slot_default">既定</string>
+    <!-- メインの枠の部品と Hub(§4.5 / §4.6。v0.7.0) -->
+    <string name="main_panel_title">メインの枠</string>
+    <string name="main_panel_desc">開いた画面の一覧の枠に出すもの(枠の見出しを下へ払っても切り替わります)</string>
+    <string name="cover_panel_title">カバーの枠</string>
+    <string name="cover_panel_desc">閉じた画面の時計の下に出すもの(枠の見出しを下へ払っても切り替わります)</string>
+    <string name="main_panel_calendar">カレンダー</string>
+    <string name="main_panel_hub">Hub</string>
+    <string name="hub_preview_title">Hub の本文</string>
+    <string name="hub_preview_desc">通知の中身をどこまで見せるか</string>
+    <string name="hub_preview_full">差出人と本文</string>
+    <string name="hub_preview_sender">差出人だけ</string>
+    <string name="hub_preview_app">アプリ名だけ</string>
+    <string name="hub_body_new">新着</string>
+    <string name="hub_body_hidden">1 件の通知</string>
+    <string name="hub_empty">新しい通知はありません</string>
+    <string name="hub_not_allowed">「通知へのアクセス」を許可すると通知を表示します。ここを押すと許可の画面を開きます</string>
+    <string name="hub_open_failed">通知を開けませんでした</string>
+    <string name="hub_clear_all">すべて消去</string>
+    <string name="hub_dismiss_failed">通知を消せませんでした</string>
+    <string name="hub_kind_all">すべての通知</string>
+    <string name="hub_kind_all_short">全</string>
+    <string name="hub_kind_missed_call">不在着信</string>
+    <string name="hub_kind_email">メール</string>
+    <string name="hub_kind_sms">SMS</string>
+    <string name="hub_kind_other">その他</string>
+    <!-- 自由枠のフォルダ(§4.5 / §7。v0.7.1) -->
+    <string name="folder_make">フォルダを作る</string>
+    <plurals name="folder_make_desc">
+        <item quantity="other">この枠にアプリを %d 個までまとめます</item>
+    </plurals>
+    <string name="folder_edit_title">ホームの枠 %d のフォルダ</string>
+    <string name="folder_default_name">フォルダ</string>
+    <string name="folder_remove">フォルダを解除</string>
+    <string name="folder_edit_button">編集</string>
+    <string name="folder_slot_description">ホームの枠 %1$d、フォルダ %2$s</string>
+    <string name="folder_added">フォルダ「%1$s」に %2$s を入れました</string>
+    <string name="folder_already">%s はすでにフォルダに入っています</string>
+    <plurals name="folder_full">
+        <item quantity="other">フォルダがいっぱいです(%d 個まで)</item>
+    </plurals>
+    <!-- 音楽・次の予定・アラーム(D26。2026-11-19) -->
+    <string name="status_alarm">アラームを設定中</string>
+    <string name="events_title">次の予定</string>
+    <string name="events_none">今日と明日の予定はありません</string>
+    <string name="events_tomorrow">明日 %s</string>
+    <string name="events_permission">予定を表示</string>
+    <string name="events_permission_desc">タップしてカレンダーの読み取りを許可</string>
+    <string name="music_not_allowed">通知へのアクセスを許可すると、再生中の音楽を操作できます</string>
+    <string name="music_idle">再生していません</string>
+    <string name="music_last">最後に再生: %s</string>
+    <string name="music_play">再生</string>
+    <string name="music_pause">一時停止</string>
+    <string name="music_prev">前の曲</string>
+    <string name="music_next">次の曲</string>
+    <string name="music_untitled">(曲名なし)</string>
+</resources>

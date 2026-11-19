@@ -1,0 +1,14 @@
+# イメージのビルドに使うのは docker/ だけ。鍵や成果物をビルドコンテキストに含めない。
+.git
+.env
+keystore
+dist
+logs
+tmp
+.gradle
+.kotlin
+build
+app/build
+context
+review
+docs

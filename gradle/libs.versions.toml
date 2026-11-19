@@ -1,0 +1,30 @@
+# 依存のバージョンはここだけで管理する。
+# 値は 2026-11 時点の安定版(Google Maven / Gradle Plugin Portal で実在確認済みの組)。
+# Gradle 本体を上げるときは wrapper と docker/Dockerfile の GRADLE_VERSION を揃える。
+[versions]
+agp = "9.5.1"
+kotlin = "2.4.21"
+coreKtx = "1.19.1"
+activityCompose = "1.13.0"
+composeBom = "2026.09.00"
+# ヒンジ情報(FoldingFeature)でカバー/メイン構成を判定する(仕様書 §3.1)。1.5.1 が安定版の最新(1.6.0 は alpha)。
+window = "1.5.1"
+junit = "4.13.2"
+# 割り当ての保存と書出し(§9)を人が読める JSON にするため。1.13.0 は公開から日が浅いので見送り(Kotlin 2.4.x と整合する 1.12.0)。
+kotlinxSerialization = "1.12.0"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+androidx-window = { group = "androidx.window", name = "window", version.ref = "window" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+kotlin-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

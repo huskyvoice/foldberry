@@ -1,0 +1,27 @@
+name: foldberry
+
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: foldberry-dev:latest
+    container_name: foldberry-dev
+    working_dir: /work
+    init: true
+    volumes:
+      - .:/work
+      # PC のユーザーフォルダに .gradle / .android を作らないため、Gradle キャッシュと
+      # adb のペアリング情報は名前付きボリュームに置く(仕様書 §11.1 / §11.2)。
+      - foldberry-gradle:/root/.gradle
+      - foldberry-adb:/root/.android
+    # compose run だと毎回コンテナが破棄され adb サーバも死ぬ。connect の次の install でも
+    # 接続が生きているよう常駐させ、各操作は exec で入る。
+    command: ["sleep", "infinity"]
+    stop_grace_period: 2s
+
+volumes:
+  foldberry-gradle:
+    name: foldberry-gradle
+  foldberry-adb:
+    name: foldberry-adb

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  FoldBerry ホームアプリ。許可ダイアログが出る権限はステータス行の Bluetooth・電波の 2 つだけ(仕様書 §10。2026-11-17 改訂)。
+  ほかに設定画面でオーナーが許可する特別なアクセスとして、通知へのアクセスとシステム設定の変更を使う。
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 自前ステータス行の Wi-Fi 表示(§4.1)。通常権限で、インストール時に許可され許可ダイアログは出ない(§10)。 -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- 自前ステータス行の Bluetooth のオン/接続表示(§4.1)。実行時の許可が要る。断られたら出さない(§10)。 -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <!-- 自前ステータス行の SIM ごとの電波表示(§4.1)。SIM の一覧に実行時の許可が要る。断られたら出さない(§10)。 -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
+    <!--
+      次の予定とカレンダーの点(D26。2026-11-19)。予定の場所をタップしたときだけ許可を求める(初回の一括の確認には入れない)。
+      断られたら予定と点を出さない(§10)。
+    -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+
+    <!--
+      自前ステータス行のタップで通知パネルを開く(§4.1 / U5。2026-11-18 追加)。
+      通常権限で、インストール時に許可され許可ダイアログは出ない(§10)。
+    -->
+    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
+
+    <!--
+      カバー画面の下の行の「自動回転」(§4.3)。ダイアログではなく、オーナーが設定画面
+      (システム設定の変更)で許可する特別なアクセス。未許可なら押したときにその画面へ案内する(§10)。
+    -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+
+    <!--
+      アプリ一覧の長押しメニューの「アンインストール」(§6。2026-11-18 追加)。ACTION_DELETE で OS の確認を出すのに要る
+      (無いと OS が黙って無視する)。通常権限で、インストール時に許可され許可ダイアログは出ない(§10)。
+    -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+
+    <!--
+      起動できるアプリの一覧(§6 / §10)。Android 11 以降はパッケージの可視性が制限されるため、
+      ランチャーに出るアプリだけを見えるように宣言する。全パッケージ取得の権限(QUERY_ALL_PACKAGES)は使わない。
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <!-- 送話キー・カメラの枠の既定のアプリを割り当て一覧に「既定」として出すため(§8。v0.6.2。権限は増えない) -->
+        <intent>
+            <action android:name="android.intent.action.DIAL" />
+        </intent>
+        <intent>
+            <action android:name="android.media.action.STILL_IMAGE_CAMERA" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".FoldBerryApp"
+        android:allowBackup="false"
+        android:enableOnBackInvokedCallback="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.FoldBerry">
+
+        <!--
+          singleTask: ホームジェスチャーで Activity を作り直さず onNewIntent に流すため(§5.3 終話動作の前提)。
+          stateNotNeeded / excludeFromRecents: ランチャーは最近使ったアプリに出さない。
+          screenOrientation=portrait: カバー画面は縦固定(§3.1)。メイン画面(最小幅 600dp 以上)では
+            Android 16 以降 OS がこの指定を無視するため、縦向きは上下分割で受ける(§3.3)。
+          configChanges: 開閉・回転で Activity を作り直さず、Compose の再構成で構成を切り替える(ちらつき対策)。
+          windowSoftInputMode=adjustResize: 割り当てシートの検索欄で文字入力中に、シートを IME の上へ出すため(§7)。
+          category.LAUNCHER は既定のホームに切り替える前に起動する手段として残す。
+        -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:stateNotNeeded="true"
+            android:excludeFromRecents="true"
+            android:screenOrientation="portrait"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          時計の横の種類別の通知数(§4.2)。オーナーが「通知へのアクセス」を許可したときだけ OS がつなぐ(§10)。
+          BIND_NOTIFICATION_LISTENER_SERVICE で守られるので、他アプリからはつなげない。
+        -->
+        <service
+            android:name=".data.NotificationCounter"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+    </application>
+
+</manifest>
