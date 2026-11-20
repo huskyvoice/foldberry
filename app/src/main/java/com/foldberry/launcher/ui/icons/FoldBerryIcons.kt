@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.graphics.vector.toPath
 import androidx.compose.ui.unit.dp
+import com.foldberry.launcher.data.Pictogram
 import com.foldberry.launcher.keyboard.FunctionKey
 import com.foldberry.launcher.keyboard.KeyGlyph
 
@@ -304,6 +305,71 @@ object FoldBerryIcons {
         val Plus = line("plus", "M12 5v14M5 12h14")
         /** 目: Hub の本文の出し方(設定 §8。2026-11-18 追加)。 */
         val Eye = line("eye", "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z", "M15 12a3 3 0 1 1-6 0a3 3 0 1 1 6 0z")
+    }
+
+    /**
+     * 割り当てアイコンの代わりの絵記号(§5.2。2026-11-20。docs/mock/appicon-mock.html の SVG と同じ形。土台なし・白)。
+     * アプリのロゴは描かない。モックの circle・rect は同じ形のパスに直して持つ。
+     */
+    object Pictograms {
+        private fun circle(cx: Float, cy: Float, r: Float) = "M${cx - r} ${cy}a$r $r 0 1 0 ${2 * r} 0a$r $r 0 1 0 ${-2 * r} 0z"
+
+        private fun rect(x: Float, y: Float, w: Float, h: Float, r: Float) =
+            "M${x + r} ${y}h${w - 2 * r}a$r $r 0 0 1 $r ${r}v${h - 2 * r}a$r $r 0 0 1 ${-r} ${r}h${-(w - 2 * r)}" +
+                "a$r $r 0 0 1 ${-r} ${-r}v${-(h - 2 * r)}a$r $r 0 0 1 $r ${-r}z"
+
+        private fun pict(name: String, vararg paths: String) = stroke("pict_$name", 24f, 1.8f, *paths)
+
+        private val Mail = pict("mail", rect(3f, 5.5f, 18f, 13f, 2f), "M3.5 7l8.5 6.5L20.5 7")
+        private val Chat = pict("chat", "M4 6.5Q4 4.5 6 4.5h12q2 0 2 2v8q0 2-2 2h-7l-4.5 3.5v-3.5H6q-2 0-2-2z")
+        private val Browser = pict("browser", circle(12f, 12f, 8.5f), "M3.5 12h17", "M12 3.5q-4 4-4 8.5t4 8.5q4-4 4-8.5t-4-8.5")
+        private val Map = pict("map", "M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z", circle(12f, 10f, 2.3f))
+        private val Photo = pict("photo", rect(3.5f, 5f, 17f, 14f, 2f), "M4 17l5-5 3.5 3.5 2.5-2.5 4.5 4.5", circle(15.5f, 9f, 1.5f))
+        private val Camera = pict(
+            "camera", "M4 8.5q0-1.5 1.5-1.5h2.5l1.5-2h5l1.5 2h2.5q1.5 0 1.5 1.5v9q0 1.5-1.5 1.5h-13Q4 19 4 17.5z", circle(12f, 12.5f, 3.5f),
+        )
+        private val Phone = pict("phone", "M6.5 4h3l1.5 4-2 1.5q1.2 3.3 5.5 5.5l1.5-2 4 1.5v3q0 2-2 2C11 19.5 4.5 13 4.5 6q0-2 2-2z")
+        private val Clock = pict("clock", circle(12f, 12f, 8.5f), "M12 7v5l3.5 2")
+        private val Calendar = pict("calendar", rect(4f, 5.5f, 16f, 14f, 2f), "M4 10h16M8.5 3.5v4M15.5 3.5v4")
+        private val Calculator = pict(
+            "calculator", rect(5.5f, 3.5f, 13f, 17f, 2f), "M8.5 7h7",
+            "M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01M8.5 15h.01M12 15h.01M15.5 15h.01M8.5 18h.01M12 18h.01M15.5 18h.01",
+        )
+        private val Note = pict("note", "M5.5 5q0-1.5 1.5-1.5h7.5l4 4V19q0 1.5-1.5 1.5H7q-1.5 0-1.5-1.5z", "M14 3.5V8h4.5M8.5 12h7M8.5 15.5h5")
+        private val Video = pict("video", rect(3f, 5.5f, 18f, 13f, 3f), "M10.5 9.2v5.6l4.6-2.8z")
+        private val Music = pict("music", "M9.5 17.5V5.5l10-2v12", circle(7f, 17.5f, 2.5f), circle(17f, 15.5f, 2.5f))
+        private val Files = pict("files", "M3.5 7q0-1.5 1.5-1.5h4.5l2 2H19q1.5 0 1.5 1.5v8.5q0 1.5-1.5 1.5H5q-1.5 0-1.5-1.5z")
+        private val Settings = pict(
+            "settings", circle(12f, 12f, 3f), circle(12f, 12f, 6.2f),
+            "M12 3.5v2.3M12 18.2v2.3M3.5 12h2.3M18.2 12h2.3M6 6l1.6 1.6M16.4 16.4L18 18M6 18l1.6-1.6M16.4 7.6L18 6",
+        )
+        private val Wallet = pict("wallet", "M4 7.5q0-2 2-2h11.5v3", rect(4f, 8.5f, 16f, 11f, 2f), "M20 12h-3.5a2 2 0 0 0 0 4H20")
+        private val Shopping = pict("shopping", "M5.5 8h13l-1 11.5H6.5z", "M9 10V7a3 3 0 0 1 6 0v3")
+        private val Generic = pict(
+            "generic", rect(5f, 5f, 5.5f, 5.5f, 1.5f), rect(13.5f, 5f, 5.5f, 5.5f, 1.5f),
+            rect(5f, 13.5f, 5.5f, 5.5f, 1.5f), rect(13.5f, 13.5f, 5.5f, 5.5f, 1.5f),
+        )
+
+        fun of(p: Pictogram): ImageVector = when (p) {
+            Pictogram.MAIL -> Mail
+            Pictogram.CHAT -> Chat
+            Pictogram.BROWSER -> Browser
+            Pictogram.MAP -> Map
+            Pictogram.PHOTO -> Photo
+            Pictogram.CAMERA -> Camera
+            Pictogram.PHONE -> Phone
+            Pictogram.CLOCK -> Clock
+            Pictogram.CALENDAR -> Calendar
+            Pictogram.CALCULATOR -> Calculator
+            Pictogram.NOTE -> Note
+            Pictogram.VIDEO -> Video
+            Pictogram.MUSIC -> Music
+            Pictogram.FILES -> Files
+            Pictogram.SETTINGS -> Settings
+            Pictogram.WALLET -> Wallet
+            Pictogram.SHOPPING -> Shopping
+            Pictogram.GENERIC -> Generic
+        }
     }
 
     fun glyph(g: KeyGlyph): ImageVector = when (g) {

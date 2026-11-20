@@ -118,8 +118,7 @@ fun BerryBody(
 
     fun assignPicked(keyId: String, keyName: String, entry: AppEntry) = assignPickedApp(context, home, keyId, keyName, entry)
 
-    val iconFilter = if (assignments.appearance.grayscaleIcons) AssignedIconFilter else null
-    CompositionLocalProvider(LocalAssignedIconFilter provides iconFilter, LocalHapticsEnabled provides assignments.feedback.haptics) {
+    CompositionLocalProvider(*assignedIconLocals(assignments.appearance), LocalHapticsEnabled provides assignments.feedback.haptics) {
         BoxWithConstraints(modifier.background(BodyColor)) {
             // 幅は与えられた領域いっぱいに使う(メイン縦向きの下半分でも左右を空けない。オーナー指定)。
             val widthDp = maxWidth.value
@@ -142,7 +141,7 @@ fun BerryBody(
                 homeDescription = homeDescription,
                 onHome = onHome,
                 cameraAssigned = cameraRef != null,
-                cameraIcon = rememberAppIcon(app.catalog, cameraRef),
+                cameraIcon = rememberAssignedIcon(app.catalog, cameraRef),
                 // カメラの枠: 選択待ちなら割り当て、割り当て済みなら起動、未割り当てなら端末のカメラ。
                 onCameraTap = {
                     val pickingNow = picking
@@ -230,7 +229,7 @@ fun BerryBody(
                 KeyRows(
                     keyRowHeight = keyRowHeight.dp,
                     fretHeight = b.fret.dp,
-                    iconFor = { spec -> rememberAppIcon(app.catalog, assignments.keys[spec.id]) },
+                    iconFor = { spec -> rememberAssignedIcon(app.catalog, assignments.keys[spec.id]) },
                     onTap = { spec -> if (picking != null) assignPicked(spec.id, resources.keyName(spec), picking) else launch(assignments.keys[spec.id]) },
                     // 長押し: 割り当て編集(§7)。選択待ちの間はタップと同じく、そのキーに割り当てる。
                     onLongPress = { spec -> if (picking != null) assignPicked(spec.id, resources.keyName(spec), picking) else home.startEdit(EditTarget.Key(spec)) },

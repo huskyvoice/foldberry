@@ -80,6 +80,9 @@ internal fun HomeSheets(home: HomeController, topInset: Dp) {
                 onDismiss = { home.finishEdit() },
                 shortcutsOf = home.assignShortcutsOf,
                 onShowShortcuts = { home.assignShortcutsOf = it },
+                pictogramOpen = home.assignPictogramOpen,
+                onShowPictogram = { home.assignPictogramOpen = it },
+                onPickPictogram = settings::setPictogram,
             )
             is EditTarget.Folder -> FolderSheet(
                 target = target,
@@ -93,6 +96,11 @@ internal fun HomeSheets(home: HomeController, topInset: Dp) {
                     home.finishEdit()
                 },
                 onDismiss = { home.finishEdit() },
+                pictogramOpen = home.assignPictogramOpen,
+                pictogramApp = home.folderPictogramApp,
+                onShowPictogram = { home.assignPictogramOpen = it },
+                onShowPictogramFor = { home.folderPictogramApp = it },
+                onPickPictogram = settings::setPictogram,
             )
         }
     }
@@ -127,8 +135,8 @@ internal fun HomeSheets(home: HomeController, topInset: Dp) {
             onSelectDateStyle = settings::setDateStyle,
             hourFormat = assignments.clock.hours,
             onSelectHourFormat = settings::setHourFormat,
-            grayscaleIcons = assignments.appearance.grayscaleIcons,
-            onGrayscaleIcons = settings::setGrayscaleIcons,
+            iconStyle = assignments.appearance.style,
+            onSelectIconStyle = settings::setIconStyle,
             haptics = assignments.feedback.haptics,
             onHaptics = settings::setHaptics,
             mainPanel = assignments.hub.panel,
@@ -150,6 +158,10 @@ internal fun HomeSheets(home: HomeController, topInset: Dp) {
             onImport = settings::startImport,
             onConfirmImport = settings::confirmImport,
             onCancelImport = settings::cancelImport,
+            confirmReset = settings.confirmReset,
+            onAskReset = { settings.confirmReset = true },
+            onConfirmReset = settings::resetSettings,
+            onCancelReset = { settings.confirmReset = false },
             onDismiss = settings::dismiss,
         )
     }

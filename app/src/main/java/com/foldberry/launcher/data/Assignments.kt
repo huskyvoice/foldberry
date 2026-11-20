@@ -119,14 +119,47 @@ data class FeedbackSetting(
     val haptics: Boolean = true,
 )
 
+/** 割り当てアイコン(キーの副刻印・自由枠・フォルダ・カメラの枠)の出し方(§5.2 / §8。v0.7.8)。白黒は Hub の行にも掛かるが、絵記号は Hub には掛けない。id は保存に使う。 */
+enum class IconStyle(val id: String) {
+    /** アプリのアイコンをそのまま出す(既定。2026-11-20 オーナー決定。id は保存済みのファイルとの互換のため "color" のまま)。 */
+    STANDARD("color"),
+    GRAY("gray"),
+
+    /** アプリのアイコンの代わりに役割の絵記号(data/Pictograms)。 */
+    PICTOGRAM("pictogram"),
+    ;
+
+    companion object {
+        fun of(id: String?): IconStyle? = entries.firstOrNull { it.id == id }
+    }
+}
+
 /**
- * 見た目の設定(§5.2 / §8。v0.5.1 で追加)。
- * @param grayscaleIcons キーの副刻印・自由枠に出す割り当てアプリのアイコンを白黒にするか(既定 true)
+ * 見た目の設定(§5.2 / §8。v0.5.1 で追加、iconStyle・pictograms は v0.7.8)。
+ * @param grayscaleIcons v0.7.7 までの白黒のオン/オフ。iconStyle が無いファイルはこれで読む(true=白黒・false=標準)。
+ *   既定は false=標準(2026-11-20 オーナー決定。v0.5.1〜v0.7.7 は白黒が既定。その間に書いたファイルは値を必ず持つので、選んでいた方で読む)
+ *   古い版で読まれても近い見た目になるよう、書くときは iconStyle と合わせて書く(標準だけ false)
+ * @param iconStyle 割り当てアイコンの出し方(IconStyle.id)。null は v0.7.7 までのファイル
+ * @param pictograms オーナーが選んだ絵記号(パッケージ名 → Pictogram.id)。無いアプリは自動で決める
  */
 @Serializable
 data class AppearanceSetting(
-    val grayscaleIcons: Boolean = true,
-)
+    val grayscaleIcons: Boolean = false,
+    val iconStyle: String? = null,
+    val pictograms: Map<String, String> = emptyMap(),
+) {
+    val style: IconStyle get() = IconStyle.of(iconStyle) ?: if (grayscaleIcons) IconStyle.GRAY else IconStyle.STANDARD
+
+    fun withStyle(s: IconStyle): AppearanceSetting = copy(iconStyle = s.id, grayscaleIcons = s != IconStyle.STANDARD)
+
+    /** アプリの絵記号を選ぶ(null=自動に戻す)。 */
+    fun withPictogram(packageName: String, p: Pictogram?): AppearanceSetting =
+        copy(pictograms = if (p == null) pictograms - packageName else pictograms + (packageName to p.id))
+
+    /** 未知の出し方は null(=grayscaleIcons で読む)に、未知の絵記号は捨てる(読込み時に通す)。 */
+    fun normalized(): AppearanceSetting =
+        copy(iconStyle = IconStyle.of(iconStyle)?.id, pictograms = pictograms.filterValues { Pictogram.of(it) != null })
+}
 
 /** メインの一覧の枠の 4×2 マス(§4.5)に出す部品。id は保存に使う。 */
 enum class MainPanelKind(val id: String) {
@@ -209,7 +242,7 @@ data class Assignments(
     val background: BackgroundSetting = BackgroundSetting(),
     /** v0.5.1 で追加。無いファイル(v0.5.0 以前)は既定値で読む。 */
     val clock: ClockSetting = ClockSetting(),
-    /** v0.5.1 で追加。無いファイルは既定値(グレースケールあり)で読む。 */
+    /** v0.5.1 で追加。無いファイルは既定値(標準。v0.7.7 までは白黒)で読む。 */
     val appearance: AppearanceSetting = AppearanceSetting(),
     /** v0.6.0 で追加。無いファイルは既定値(触覚あり)で読む。 */
     val feedback: FeedbackSetting = FeedbackSetting(),
@@ -330,7 +363,7 @@ object AssignmentsCodec {
         return Decoded.Ok(
             parsed.copy(
                 keys = keys, background = parsed.background.normalized(), clock = parsed.clock.normalized(),
-                hub = parsed.hub.normalized(), folders = Assignments.normalizeFolders(keys, parsed.folders),
+                appearance = parsed.appearance.normalized(), hub = parsed.hub.normalized(), folders = Assignments.normalizeFolders(keys, parsed.folders),
             ),
         )
     }
@@ -443,6 +476,12 @@ fun Assignments.assignedCount(): Int = keys.size + folders.values.sumOf { it.app
 
 /** 割り当てを全部外す(設定の割り当て一覧の「すべて解除」。§8)。フォルダも消す。背景・時計・見た目・触覚・Hub の設定は残す。 */
 fun Assignments.clearedAssignments(): Assignments = copy(keys = emptyMap(), folders = emptyMap())
+
+/**
+ * 設定の初期化(§8。2026-11-20 オーナー決定): 割り当て(キー・自由枠・フォルダ)は残し、背景・時計・見た目(アイコンの表示と
+ * 選んだ絵記号)・触覚・Hub を既定に戻す。表示言語は OS 側の設定なので対象外。
+ */
+fun Assignments.resetSettings(): Assignments = Assignments.EMPTY.copy(keys = keys, folders = folders)
 
 /**
  * 未割り当てのときに開く端末の既定のアプリ(§8。v0.6.2)。送話キー=電話(ダイヤル画面)、カメラの枠=カメラ。

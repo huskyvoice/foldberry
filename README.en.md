@@ -30,9 +30,10 @@ The physical-style QWERTY keyboard drawn on screen is not for typing — each ke
 - **Hub**: Show your notification list in place of the calendar (swipe the header down to flip between them). Swipe a row sideways to clear it, or tap "Clear all" to clear the notifications shown.
 - **App list**: A paged app list. Filter apps by name with the search field at the top. Assigned apps get a badge. Long-press to assign, open app info, or uninstall.
 - **App shortcuts**: Items you get by long-pressing an app icon, such as Gmail's "Compose", can also be assigned to keys and slots (tap › next to an app in the assignment sheet, or use the long-press menu in the app list). Available only while FoldBerry is your default home app.
+- **Icon style**: Assigned icons on keys and slots can be shown as is (Standard), in gray, or as pictograms (Settings). Pictograms replace app logos with a symbol for what the app does (an envelope for mail, and so on); apps that fit none share one generic symbol. You can change an app's pictogram in the assignment sheet (or, for apps in a folder, in the folder's edit sheet).
 - **Folders**: Put folders holding up to 4 apps into the free slots on the main screen.
 - **Voice control (voice build only)**: Voice control is experimental and only in the "voice build" on the `feature/voice` branch (not in the FoldBerry.apk on Releases). Long-press the 0 key (the one with the mic) and speak to open apps, set alarms and timers, call someone (opens the dialer with their number), turn the flashlight or vibrate mode on and off, assign or clear a letter key ("Assign Gmail to the G key"), open FoldBerry settings, and switch between the calendar and Hub. Works in Japanese and English, and listening happens only on the device (see "Privacy" below).
-- **Settings**: Background (presets or your photo), language (日本語 / English), voice language (voice build only), clock format, haptics on/off, assignment list, export/import of settings.
+- **Settings**: Background (presets or your photo), language (日本語 / English), voice language (voice build only), clock format, haptics on/off, assignment list, export/import of settings, and resetting settings (assignments are kept).
 
 ## Requirements
 

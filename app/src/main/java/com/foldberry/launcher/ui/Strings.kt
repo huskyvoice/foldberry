@@ -7,8 +7,10 @@ import com.foldberry.launcher.data.BackgroundPreset
 import com.foldberry.launcher.data.DateStyle
 import com.foldberry.launcher.data.HourFormat
 import com.foldberry.launcher.data.HubPreview
+import com.foldberry.launcher.data.IconStyle
 import com.foldberry.launcher.data.MainPanelKind
 import com.foldberry.launcher.data.NameGroup
+import com.foldberry.launcher.data.Pictogram
 import com.foldberry.launcher.keyboard.AssignmentSlot
 import com.foldberry.launcher.keyboard.FunctionKey
 import com.foldberry.launcher.keyboard.KeySpec
@@ -100,6 +102,37 @@ internal fun HubPreview.labelRes(): Int = when (this) {
     HubPreview.FULL -> R.string.hub_preview_full
     HubPreview.SENDER -> R.string.hub_preview_sender
     HubPreview.APP -> R.string.hub_preview_app
+}
+
+/** 割り当てアイコンの出し方の名前(設定シートの選択肢。§5.2)。 */
+@StringRes
+internal fun IconStyle.labelRes(): Int = when (this) {
+    IconStyle.STANDARD -> R.string.icon_style_color
+    IconStyle.GRAY -> R.string.icon_style_gray
+    IconStyle.PICTOGRAM -> R.string.icon_style_pictogram
+}
+
+/** 絵記号の名前(割り当てシートの絵記号の行・選ぶページ。§5.2)。 */
+@StringRes
+internal fun Pictogram.labelRes(): Int = when (this) {
+    Pictogram.MAIL -> R.string.pictogram_mail
+    Pictogram.CHAT -> R.string.pictogram_chat
+    Pictogram.BROWSER -> R.string.pictogram_browser
+    Pictogram.MAP -> R.string.pictogram_map
+    Pictogram.PHOTO -> R.string.pictogram_photo
+    Pictogram.CAMERA -> R.string.pictogram_camera
+    Pictogram.PHONE -> R.string.pictogram_phone
+    Pictogram.CLOCK -> R.string.pictogram_clock
+    Pictogram.CALENDAR -> R.string.pictogram_calendar
+    Pictogram.CALCULATOR -> R.string.pictogram_calculator
+    Pictogram.NOTE -> R.string.pictogram_note
+    Pictogram.VIDEO -> R.string.pictogram_video
+    Pictogram.MUSIC -> R.string.pictogram_music
+    Pictogram.FILES -> R.string.pictogram_files
+    Pictogram.SETTINGS -> R.string.pictogram_settings
+    Pictogram.WALLET -> R.string.pictogram_wallet
+    Pictogram.SHOPPING -> R.string.pictogram_shopping
+    Pictogram.GENERIC -> R.string.pictogram_generic
 }
 
 /** 背景プリセットの表示名。 */

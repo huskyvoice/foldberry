@@ -55,6 +55,7 @@ import com.foldberry.launcher.data.AppFolder
 import com.foldberry.launcher.data.Assignments
 import com.foldberry.launcher.data.CatalogState
 import com.foldberry.launcher.data.FolderAdd
+import com.foldberry.launcher.data.IconStyle
 import com.foldberry.launcher.data.MainPanelKind
 import com.foldberry.launcher.data.flipped
 import com.foldberry.launcher.keyboard.KeyLayout
@@ -143,8 +144,7 @@ fun MainHomePanel(home: HomeController, bottomInset: Boolean, modifier: Modifier
         if (openFolder != null && assignments.folders[KeyLayout.mainSlotId(openFolder)] == null) home.openFolder = null
     }
 
-    val iconFilter = if (assignments.appearance.grayscaleIcons) AssignedIconFilter else null
-    CompositionLocalProvider(LocalAssignedIconFilter provides iconFilter) {
+    CompositionLocalProvider(*assignedIconLocals(assignments.appearance)) {
         BoxWithConstraints(
             modifier
                 .then(if (portraitScreen) Modifier else Modifier.background(ListBackground))
@@ -203,7 +203,7 @@ fun MainHomePanel(home: HomeController, bottomInset: Boolean, modifier: Modifier
                             // 一覧の読込み中・失敗中は名前を出さない(「端末に無いアプリ」と誤って出さないように)。
                             label = ref?.let { loaded?.labelOf(it) ?: if (catalogState is CatalogState.Loaded) resources.getString(R.string.app_missing_label) else null },
                             description = resources.getString(R.string.main_slot_name, index + 1),
-                            icon = rememberAppIcon(app.catalog, ref),
+                            icon = rememberAssignedIcon(app.catalog, ref),
                             onClick = { onSlotTap(index, ref) },
                             haptics = assignments.feedback.haptics,
                             onLongClick = { if (home.pickingApp == null) home.startEdit(EditTarget.MainSlot(index)) else onSlotTap(index, ref) },
@@ -250,17 +250,28 @@ private fun FolderCell(folder: AppFolder, description: String, haptics: Boolean,
     ) {
         // 重ねたカード(モック docs/mock/folder-mock.html のアイコン C。2026-11-18 オーナー決定):
         // 先頭のアプリを手前に大きく、2・3 個目を右上へずらして後ろに薄く重ね、右下に件数。
+        val pictograms = LocalAssignedIconLook.current.style == IconStyle.PICTOGRAM
         Box(Modifier.size(SlotIconSize)) {
             folder.apps.take(3).withIndex().reversed().forEach { (i, ref) ->
                 key(ref) {
-                    val icon = rememberAppIcon(app.catalog, ref)
+                    val icon = rememberAssignedIcon(app.catalog, ref)
                     val offset = FolderStack[i]
                     Box(
                         Modifier
                             .offset(offset.first, offset.second)
                             .size(FolderCardSize)
                             .alpha(FolderCardAlpha[i])
-                            .shadow(3.dp, RoundedCornerShape(11.dp)),
+                            // 絵記号は土台なしの線画なので、そのまま重ねると後ろの線が透けて読めない(実機で確認)。
+                            // 絵記号のときはカードを背景色で塗って薄い枠線を付け、手前の 1 個目だけが読めるようにする
+                            // (docs/mock/appicon-mock.html のフォルダ B。2026-11-20 オーナー決定)。影は線の後ろに黒い角丸が出るので外す。
+                            .then(
+                                if (pictograms) {
+                                    Modifier.background(ListBackground, RoundedCornerShape(11.dp))
+                                        .border(1.5.dp, Color.White.copy(alpha = 0x40 / 255f), RoundedCornerShape(11.dp))
+                                } else {
+                                    Modifier.shadow(3.dp, RoundedCornerShape(11.dp))
+                                },
+                            ),
                     ) {
                         if (icon != null) {
                             Image(icon, contentDescription = null, modifier = Modifier.fillMaxSize(), colorFilter = LocalAssignedIconFilter.current)

@@ -277,11 +277,11 @@ class AssignmentsTest {
     }
 
     @Test
-    fun 見た目の設定も書いて読み戻せ無いファイルはグレースケールありで読む() {
+    fun 見た目の設定も書いて読み戻せ無いファイルは標準で読む() {
         val a = Assignments.EMPTY.copy(appearance = AppearanceSetting(grayscaleIcons = false))
         assertEquals(AssignmentsCodec.Decoded.Ok(a), AssignmentsCodec.decode(AssignmentsCodec.encode(a)))
         val old = """{"version":1,"keys":{}}"""
-        assertEquals(true, (AssignmentsCodec.decode(old) as AssignmentsCodec.Decoded.Ok).value.appearance.grayscaleIcons)
+        assertEquals(IconStyle.STANDARD, (AssignmentsCodec.decode(old) as AssignmentsCodec.Decoded.Ok).value.appearance.style)
     }
 
     @Test
@@ -400,12 +400,28 @@ class AssignmentsTest {
             .copy(
                 background = BackgroundSetting(preset = BackgroundPreset.BERRY.id, overlay = 40),
                 clock = ClockSetting(dateStyle = DateStyle.NUMERIC.id, hourFormat = HourFormat.H12.id),
-                appearance = AppearanceSetting(grayscaleIcons = false),
+                appearance = AppearanceSetting(grayscaleIcons = true),
                 feedback = FeedbackSetting(haptics = false),
             )
         val cleared = a.clearedAssignments()
         assertEquals(0, cleared.assignedCount())
         assertEquals(a.copy(keys = emptyMap()), cleared)
+    }
+
+    @Test
+    fun 設定の初期化は割り当てを残して設定を既定に戻す() {
+        val folder = AppFolder("f", listOf(mail, camera))
+        val a = Assignments.EMPTY.withKey("W", mail).withFolder("MAIN_SLOT_2", folder)
+            .copy(
+                background = BackgroundSetting(preset = BackgroundPreset.BERRY.id, overlay = 40),
+                clock = ClockSetting(dateStyle = DateStyle.NUMERIC.id, hourFormat = HourFormat.H12.id),
+                appearance = AppearanceSetting().withStyle(IconStyle.PICTOGRAM).withPictogram("p", Pictogram.MAIL),
+                feedback = FeedbackSetting(haptics = false),
+                hub = HubSetting(mainPanel = MainPanelKind.HUB.id),
+            )
+        val reset = a.resetSettings()
+        assertEquals(Assignments.EMPTY.copy(keys = a.keys, folders = a.folders), reset)
+        assertEquals(IconStyle.STANDARD, reset.appearance.style)
     }
 
     @Test

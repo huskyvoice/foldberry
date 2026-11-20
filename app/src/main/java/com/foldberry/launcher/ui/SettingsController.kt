@@ -31,12 +31,15 @@ import com.foldberry.launcher.data.CatalogState
 import com.foldberry.launcher.data.DateStyle
 import com.foldberry.launcher.data.HourFormat
 import com.foldberry.launcher.data.HubPreview
+import com.foldberry.launcher.data.IconStyle
 import com.foldberry.launcher.data.ImportResult
 import com.foldberry.launcher.data.MainPanelKind
 import com.foldberry.launcher.data.NotificationCounter
+import com.foldberry.launcher.data.Pictogram
 import com.foldberry.launcher.data.SettingsTransfer
 import com.foldberry.launcher.data.clearedAssignments
 import com.foldberry.launcher.data.importSettings
+import com.foldberry.launcher.data.resetSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -92,8 +95,12 @@ class SettingsController internal constructor(
     /** 大時計の日付・曜日の書式を変える(§4.2 / §8)。即時保存。 */
     fun setDateStyle(style: DateStyle) = store.update { it.copy(clock = it.clock.copy(dateStyle = style.id)) }
 
-    /** 割り当て済みアイコン(キー・タイル)のグレースケールを切り替える(§5.2 / §8)。即時保存。 */
-    fun setGrayscaleIcons(on: Boolean) = store.update { it.copy(appearance = it.appearance.copy(grayscaleIcons = on)) }
+    /** 割り当てアイコンの出し方(標準・白黒・絵記号)を変える(§5.2 / §8)。即時保存。 */
+    fun setIconStyle(style: IconStyle) = store.update { it.copy(appearance = it.appearance.withStyle(style)) }
+
+    /** アプリの絵記号を選ぶ(null=自動に戻す。§5.2)。パッケージ単位なので同じアプリを置いた他の枠にも効く。即時保存。 */
+    fun setPictogram(packageName: String, pictogram: Pictogram?) =
+        store.update { it.copy(appearance = it.appearance.withPictogram(packageName, pictogram)) }
 
     /** 大時計の 12/24 時間表記を変える(§4.2 / §8)。即時保存。 */
     fun setHourFormat(format: HourFormat) = store.update { it.copy(clock = it.clock.copy(hourFormat = format.id)) }
@@ -126,6 +133,9 @@ class SettingsController internal constructor(
     /** 割り当て一覧の「すべて解除」の確認を出しているか。 */
     var confirmClearAll by mutableStateOf(false)
 
+    /** 「設定を初期化」の確認を出しているか(§8。2026-11-20)。 */
+    var confirmReset by mutableStateOf(false)
+
     /** 設定シートを出すか(開いている、または読込みの確認待ち)。 */
     val showing: Boolean get() = visible || pendingImport != null
 
@@ -135,6 +145,12 @@ class SettingsController internal constructor(
         confirmClearAll = false
         assignmentScroll = ScrollState(0)
         page = SettingsPage.ASSIGNMENTS
+    }
+
+    /** 設定を初期状態に戻す(確認の後。§8)。割り当ては残す(resetSettings)。 */
+    fun resetSettings() {
+        store.update { it.resetSettings() }
+        confirmReset = false
     }
 
     /** 割り当てを全部外す(確認の後。§8)。背景などの設定は残す。 */
@@ -150,6 +166,7 @@ class SettingsController internal constructor(
         when {
             pendingImport != null -> pendingImport = null
             confirmClearAll -> confirmClearAll = false
+            confirmReset -> confirmReset = false
             page != SettingsPage.MAIN -> page = SettingsPage.MAIN
             else -> dismiss()
         }
@@ -177,6 +194,7 @@ class SettingsController internal constructor(
     fun resetPage() {
         page = SettingsPage.MAIN
         confirmClearAll = false
+        confirmReset = false
     }
 
     /** 画面の言語を切り替える(§8)。OS が Activity を作り直すので、シートは閉じてホームに戻る。 */

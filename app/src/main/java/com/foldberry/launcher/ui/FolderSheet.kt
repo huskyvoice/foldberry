@@ -18,7 +18,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -32,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
@@ -41,8 +44,11 @@ import com.foldberry.launcher.R
 import com.foldberry.launcher.data.AppCatalog
 import com.foldberry.launcher.data.AppEntry
 import com.foldberry.launcher.data.AppFolder
+import com.foldberry.launcher.data.AppRef
 import com.foldberry.launcher.data.Assignments
 import com.foldberry.launcher.data.CatalogState
+import com.foldberry.launcher.data.IconStyle
+import com.foldberry.launcher.data.Pictogram
 import com.foldberry.launcher.data.filterByName
 import com.foldberry.launcher.ui.icons.FoldBerryIcons
 
@@ -61,6 +67,14 @@ internal fun FolderSheet(
     onChange: (AppFolder) -> Unit,
     onRemove: () -> Unit,
     onDismiss: () -> Unit,
+    /** 中のアプリの一覧(絵記号を選ぶ前のページ)を出す(HomeController.assignPictogramOpen。§5.2)。 */
+    pictogramOpen: Boolean = false,
+    /** 絵記号を選ぶページを出しているアプリ(HomeController.folderPictogramApp)。 */
+    pictogramApp: AppRef? = null,
+    onShowPictogram: (Boolean) -> Unit = {},
+    onShowPictogramFor: (AppRef?) -> Unit = {},
+    /** 絵記号を選んだ(null=自動に戻す)。パッケージ単位で保存する。 */
+    onPickPictogram: (String, Pictogram?) -> Unit = { _, _ -> },
 ) {
     val saved = assignments.folders[target.slotId]
     // 中身は保存があれば常に保存から読む(編集中にアンインストール・起動画面の付け替えで保存が直っても、古い参照を書き戻さない。
@@ -71,9 +85,48 @@ internal fun FolderSheet(
     var query by rememberSaveable(target) { mutableStateOf("") }
     val max = Assignments.MAX_FOLDER_APPS
 
-    fun update(nextApps: List<com.foldberry.launcher.data.AppRef>) {
+    fun update(nextApps: List<AppRef>) {
         unsaved = nextApps
         onChange(AppFolder(name, nextApps))
+    }
+
+    // 中のアプリの絵記号(v0.7.8。2026-11-20 オーナー決定: 「絵記号」の 1 行 → 中のアプリの一覧 → 選ぶページ)。
+    // 絵記号はパッケージ単位なので、同じアプリ(とそのショートカット)は 1 行にまとめる。
+    val loaded = catalogState as? CatalogState.Loaded
+    val pictogramApps = apps.map { it.app }.distinctBy { it.packageName }
+    val canShowPictograms = assignments.appearance.style == IconStyle.PICTOGRAM && pictogramApps.isNotEmpty()
+    val pictogramTarget = pictogramApp?.takeIf { app -> canShowPictograms && pictogramApps.any { it.packageName == app.packageName } }
+    // 開いたまま中身から外れた・絵記号の表示をやめたときは見えないフラグを下ろす(戻るが空振りしないように。割り当てシートと同じ)。
+    LaunchedEffect(pictogramOpen, pictogramApp, canShowPictograms, pictogramTarget) {
+        if (pictogramApp != null && pictogramTarget == null) onShowPictogramFor(null)
+        if (pictogramOpen && !canShowPictograms) onShowPictogram(false)
+    }
+    fun labelOf(ref: AppRef): String = loaded?.entryOf(ref)?.label ?: ref.packageName
+    if (pictogramTarget != null) {
+        PictogramPage(
+            appLabel = labelOf(pictogramTarget),
+            chosen = assignments.appearance.pictograms[pictogramTarget.packageName]?.let { Pictogram.of(it) },
+            auto = rememberAutoPictogram(catalog, pictogramTarget.packageName),
+            onPick = { onPickPictogram(pictogramTarget.packageName, it) },
+            onBack = { onShowPictogramFor(null) },
+            onDismiss = onDismiss,
+        )
+        return
+    }
+    if (pictogramOpen && canShowPictograms) {
+        SheetFrame(title = stringResource(R.string.pictogram_row), onDismiss = onDismiss, onBack = { onShowPictogram(false) }, bounce = true) {
+            pictogramApps.forEach { ref ->
+                key(ref.packageName) {
+                    val chosen = assignments.appearance.pictograms[ref.packageName]?.let { Pictogram.of(it) }
+                    val auto = rememberAutoPictogram(catalog, ref.packageName)
+                    CRow(
+                        (chosen ?: auto)?.let { FoldBerryIcons.Pictograms.of(it) }, labelOf(ref), pictogramDescription(chosen, auto),
+                        onClick = { onShowPictogramFor(ref) },
+                    ) { CChevron() }
+                }
+            }
+        }
+        return
     }
 
     SheetFrame(title = target.title(LocalResources.current), onDismiss = onDismiss, trailing = "${apps.size}/$max", bounce = true) {
@@ -99,6 +152,15 @@ internal fun FolderSheet(
             is CatalogState.Loaded -> {
                 val shown = filterByName(catalogState.apps, query) { it.label }
                 // 「フォルダを解除」は一覧の外(上)に固定し、スクロールしても隠れないようにする(割り当てシートと同じ。2026-11-19 オーナー要望)。
+                if (canShowPictograms) {
+                    val first = pictogramApps.first().packageName
+                    val firstShown = assignments.appearance.pictograms[first]?.let { Pictogram.of(it) } ?: rememberAutoPictogram(catalog, first)
+                    CRow(
+                        firstShown?.let { FoldBerryIcons.Pictograms.of(it) }, stringResource(R.string.pictogram_row),
+                        pluralStringResource(R.plurals.folder_pictogram_desc, pictogramApps.size, pictogramApps.size),
+                        onClick = { onShowPictogram(true) },
+                    ) { CChevron() }
+                }
                 if (saved != null) {
                     CRow(FoldBerryIcons.Line.Trash, stringResource(R.string.folder_remove), onClick = onRemove, titleColor = SheetDanger)
                 }

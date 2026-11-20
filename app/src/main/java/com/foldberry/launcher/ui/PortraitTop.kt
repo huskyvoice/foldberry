@@ -40,9 +40,8 @@ internal fun PortraitTop(home: HomeController, modifier: Modifier) {
     val assignments by app.store.state.collectAsState()
     val now by rememberNow()
     val status = BodyLayout.STATUS_DP.dp
-    val iconFilter = if (assignments.appearance.grayscaleIcons) AssignedIconFilter else null
     CompositionLocalProvider(
-        LocalAssignedIconFilter provides iconFilter,
+        *assignedIconLocals(assignments.appearance),
         LocalHapticsEnabled provides assignments.feedback.haptics,
         // 上半分のシートは IME・ナビバーの分を空けない(どちらも下半分にしか掛からない)。
         LocalSheetWindowInsets provides false,

@@ -109,6 +109,12 @@ class HomeController internal constructor(
      */
     var assignShortcutsOf by mutableStateOf<AppEntry?>(null)
 
+    /** 割り当てシートで今のアプリの絵記号を選ぶページを開いているか(§5.2。2026-11-20)。持ち方・消し方は assignShortcutsOf と同じ。 */
+    var assignPictogramOpen by mutableStateOf(false)
+
+    /** フォルダの編集シートで絵記号を選ぶページを出しているアプリ(§5.2。2026-11-20)。null=出していない。消し方は assignPictogramOpen と同じ。 */
+    var folderPictogramApp by mutableStateOf<AppRef?>(null)
+
     /** カバー構成のアプリ一覧の重ね表示(トラックパッド)。 */
     var overlayOpen by mutableStateOf(false)
 
@@ -155,7 +161,12 @@ class HomeController internal constructor(
         when (panelToClose(openPanels)) {
             Panel.SETTINGS -> settings.back()
             // ショートカットのページならアプリの一覧へ 1 段戻す。
-            Panel.ASSIGN -> if (assignShortcutsOf != null) assignShortcutsOf = null else finishEdit()
+            Panel.ASSIGN -> when {
+                folderPictogramApp != null -> folderPictogramApp = null
+                assignPictogramOpen -> assignPictogramOpen = false
+                assignShortcutsOf != null -> assignShortcutsOf = null
+                else -> finishEdit()
+            }
             Panel.APP_MENU -> menuApp = null
             Panel.KEY_PICK -> pickingApp = null
             Panel.APP_OVERLAY -> overlayOpen = false
@@ -224,12 +235,16 @@ class HomeController internal constructor(
         // 開いたまま長押しできる。閉じないと割り当てシートが設定シートの下に隠れる。
         settings.dismiss()
         assignShortcutsOf = null
+        assignPictogramOpen = false
+        folderPictogramApp = null
         editing = target
     }
 
     /** 開いている割り当てシートを別の対象に替える(自由枠 → フォルダの編集)。一覧から開いていれば閉じたら一覧に戻すまま。 */
     internal fun switchEdit(target: EditTarget) {
         assignShortcutsOf = null
+        assignPictogramOpen = false
+        folderPictogramApp = null
         editing = target
     }
 
@@ -252,6 +267,8 @@ class HomeController internal constructor(
         settings.visible = false
         returnToList = true
         assignShortcutsOf = null
+        assignPictogramOpen = false
+        folderPictogramApp = null
         editing = target
     }
 

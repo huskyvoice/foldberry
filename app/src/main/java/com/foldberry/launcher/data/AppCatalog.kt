@@ -62,6 +62,8 @@ class AppCatalog(private val context: Context, private val scope: CoroutineScope
     private val launcherApps = context.getSystemService(LauncherApps::class.java)
     private val user: UserHandle = Process.myUserHandle()
     private val icons = ConcurrentHashMap<AppRef, ImageBitmap>()
+    /** アプリが申告する種類(ApplicationInfo.category。絵記号の自動判定に使う)。読めないときは CATEGORY_UNDEFINED(-1)。 */
+    private val categories = ConcurrentHashMap<String, Int>()
 
     private val _state = MutableStateFlow<CatalogState>(CatalogState.Loading)
     val state: StateFlow<CatalogState> = _state.asStateFlow()
@@ -91,6 +93,7 @@ class AppCatalog(private val context: Context, private val scope: CoroutineScope
     private fun changed(packages: Set<String>) {
         // 更新でアイコンが変わり得るので、該当パッケージのキャッシュを捨てる。
         icons.keys.removeAll { it.packageName in packages }
+        categories.keys.removeAll { it in packages }
         refresh()
     }
 
@@ -175,6 +178,22 @@ class AppCatalog(private val context: Context, private val scope: CoroutineScope
                 null
             }
         }
+    }
+
+    /**
+     * アプリが manifest で申告する種類(ApplicationInfo.category。絵記号の自動判定 data/Pictograms に使う。§5.2)。
+     * 申告が無い・読めないときは null。他アプリの情報は LauncherApps 経由で読む(一覧と同じ経路)。
+     */
+    suspend fun appCategory(packageName: String): Int? {
+        val category = categories[packageName] ?: withContext(Dispatchers.IO) {
+            try {
+                launcherApps.getApplicationInfo(packageName, 0, user).category
+            } catch (e: Exception) {
+                // アンインストール済み(NameNotFound)など。失敗もキャッシュして引き直さない(更新の通知で捨てる)。
+                ApplicationInfo.CATEGORY_UNDEFINED
+            }.also { categories[packageName] = it }
+        }
+        return category.takeIf { it != ApplicationInfo.CATEGORY_UNDEFINED }
     }
 
     /**

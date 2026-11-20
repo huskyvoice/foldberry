@@ -56,6 +56,7 @@ import com.foldberry.launcher.data.ClockText
 import com.foldberry.launcher.data.DateStyle
 import com.foldberry.launcher.data.HourFormat
 import com.foldberry.launcher.data.HubPreview
+import com.foldberry.launcher.data.IconStyle
 import com.foldberry.launcher.data.ImportResult
 import com.foldberry.launcher.data.MainPanelKind
 import com.foldberry.launcher.data.assignedCount
@@ -114,7 +115,7 @@ fun SettingsSheet(
     language: String,
     dateStyle: DateStyle,
     hourFormat: HourFormat,
-    grayscaleIcons: Boolean,
+    iconStyle: IconStyle,
     haptics: Boolean,
     notificationAllowed: Boolean,
     mainPanel: MainPanelKind,
@@ -127,7 +128,7 @@ fun SettingsSheet(
     onSelectLanguage: (String) -> Unit,
     onSelectDateStyle: (DateStyle) -> Unit,
     onSelectHourFormat: (HourFormat) -> Unit,
-    onGrayscaleIcons: (Boolean) -> Unit,
+    onSelectIconStyle: (IconStyle) -> Unit,
     onHaptics: (Boolean) -> Unit,
     onNotificationAccess: () -> Unit,
     onAppPermissions: () -> Unit,
@@ -138,6 +139,11 @@ fun SettingsSheet(
     onImport: () -> Unit,
     onConfirmImport: () -> Unit,
     onCancelImport: () -> Unit,
+    /** 「設定を初期化」の確認を出しているか(§8。割り当ては残す)。 */
+    confirmReset: Boolean,
+    onAskReset: () -> Unit,
+    onConfirmReset: () -> Unit,
+    onCancelReset: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val onList = page == SettingsPage.ASSIGNMENTS && pendingImport == null
@@ -147,16 +153,22 @@ fun SettingsSheet(
     } else {
         null
     }
+    // トップのスクロール位置は確認画面(初期化・読込み)の間も保つ(下の方の行から確認を出して取りやめたとき先頭に戻らないように)。
+    val mainScroll = rememberScrollState()
     SheetFrame(title = title, onDismiss = onDismiss, onBack = assignmentList.onBack, trailing = trailing, bounce = true) {
         if (pendingImport != null) {
             ImportConfirm(pendingImport, onConfirmImport, onCancelImport)
+            return@SheetFrame
+        }
+        if (confirmReset) {
+            ResetConfirm(onConfirmReset, onCancelReset)
             return@SheetFrame
         }
         if (page == SettingsPage.ASSIGNMENTS) {
             AssignmentListPage(assignmentList)
             return@SheetFrame
         }
-        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+        Column(Modifier.fillMaxWidth().verticalScroll(mainScroll)) {
             CSectionTitle(stringResource(R.string.section_background))
             BackgroundSection(background, onSelectPreset, onPickPhoto, onOverlay)
 
@@ -186,9 +198,9 @@ fun SettingsSheet(
             CRow(FoldBerryIcons.Line.Eye, stringResource(R.string.hub_preview_title), stringResource(R.string.hub_preview_desc), onClick = {
                 onSelectHubPreview(HubPreview.entries.next(hubPreview))
             }) { CValue(stringResource(hubPreview.labelRes())) }
-            CRow(FoldBerryIcons.Line.Drop, stringResource(R.string.grayscale_title), stringResource(R.string.grayscale_desc), onClick = {
-                onGrayscaleIcons(!grayscaleIcons)
-            }) { CCheck(grayscaleIcons) }
+            CRow(FoldBerryIcons.Line.Drop, stringResource(R.string.icon_style_title), stringResource(R.string.icon_style_desc), onClick = {
+                onSelectIconStyle(IconStyle.entries.next(iconStyle))
+            }) { CValue(stringResource(iconStyle.labelRes())) }
 
             CSectionTitle(stringResource(R.string.section_keyboard))
             val count = assignmentList.count
@@ -213,6 +225,8 @@ fun SettingsSheet(
             CRow(FoldBerryIcons.Line.Home, stringResource(R.string.home_app_title), stringResource(R.string.home_app_desc), onClick = onHomeSettings) { CChevron() }
             CRow(FoldBerryIcons.Line.Upload, stringResource(R.string.export_title), stringResource(R.string.export_desc), onClick = onExport) { CChevron() }
             CRow(FoldBerryIcons.Line.Download, stringResource(R.string.import_title), stringResource(R.string.import_desc), onClick = onImport) { CChevron() }
+            // 設定の初期化(2026-11-20 オーナー指定。割り当ては残す)。押し間違えを避けるため下の方に置き、確認を 1 回はさむ。
+            CRow(FoldBerryIcons.Line.Trash, stringResource(R.string.reset_title), stringResource(R.string.reset_desc), onClick = onAskReset, titleColor = SheetDanger)
             BasicText(versionText, Modifier.padding(18.dp), style = TextStyle(color = Color(0xFF5B5F68), fontSize = 12.sp))
         }
     }
@@ -477,6 +491,20 @@ private fun ImportConfirm(pending: ImportResult.Ok, onConfirm: () -> Unit, onCan
         Spacer(Modifier.height(16.dp))
         Row {
             SheetButton(stringResource(R.string.import_replace), SheetAccent, onConfirm)
+            Spacer(Modifier.width(12.dp))
+            SheetButton(stringResource(R.string.import_cancel), SheetTextDim, onCancel)
+        }
+    }
+}
+
+/** 「設定を初期化」の確認(§8)。すべて解除の確認(AssignmentListPage)と同じ形。 */
+@Composable
+private fun ResetConfirm(onConfirm: () -> Unit, onCancel: () -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(18.dp)) {
+        BasicText(stringResource(R.string.reset_confirm), style = TextStyle(color = SheetText, fontSize = 15.sp))
+        Spacer(Modifier.height(16.dp))
+        Row {
+            SheetButton(stringResource(R.string.reset_ok), SheetDanger, onConfirm)
             Spacer(Modifier.width(12.dp))
             SheetButton(stringResource(R.string.import_cancel), SheetTextDim, onCancel)
         }
