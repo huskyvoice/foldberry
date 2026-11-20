@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -43,6 +44,7 @@ import com.foldberry.launcher.layout.BodyLayout
 import com.foldberry.launcher.layout.computeBodyLayout
 import com.foldberry.launcher.layout.computeKeyboardLayout
 import androidx.compose.foundation.layout.Box
+import com.foldberry.launcher.ui.keyboard.DIMMED_ALPHA
 import com.foldberry.launcher.ui.keyboard.FunctionRow
 import com.foldberry.launcher.ui.keyboard.LocalHapticsEnabled
 import com.foldberry.launcher.ui.keyboard.KeyRows
@@ -108,6 +110,13 @@ fun BerryBody(
     val assignments by app.store.state.collectAsState()
     val settings = home.settings
     val picking = home.pickingApp
+    // 音声操作の間はキーボード(下の行・機能列・キー)を暗くする(0 のキーだけは暗くせず青くする。§5.5)。
+    // 暗幕を重ねると青いキーも暗くなるため、部品ごとに薄くする。
+    val voiceLock = home.voice.isOpen
+    // 音声操作の間のキーの押し: 0 のキーは何もしない(押しても止めない。2026-11-19 オーナー指定)、ほかのキー・機能列は中止。
+    fun voiceKeyPress(keyId: String?) {
+        if (keyId != KeyLayout.VOICE_KEY_ID) home.voice.cancel()
+    }
 
     fun toast(text: String) = Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
 
@@ -117,6 +126,7 @@ fun BerryBody(
     }
 
     fun assignPicked(keyId: String, keyName: String, entry: AppEntry) = assignPickedApp(context, home, keyId, keyName, entry)
+    val startVoice = rememberVoiceStart(home.voice)
 
     val iconFilter = if (assignments.appearance.grayscaleIcons) AssignedIconFilter else null
     CompositionLocalProvider(LocalAssignedIconFilter provides iconFilter, LocalHapticsEnabled provides assignments.feedback.haptics) {
@@ -159,8 +169,13 @@ fun BerryBody(
             )
             Column(Modifier.fillMaxWidth().fillMaxHeight().graphicsLayer { applyBackdropBlur(backdropBlur) }) {
                 // メイン縦: 下の行をキーの上に置く(親指の届く位置。家はホームに戻る=メインと同じ)。
-                if (keyboardOnly) Box(Modifier.fillMaxWidth().height(KeyboardDockHeight), contentAlignment = Alignment.Center) {
+                if (keyboardOnly) Box(
+                    Modifier.fillMaxWidth().height(KeyboardDockHeight).graphicsLayer { alpha = if (voiceLock) DIMMED_ALPHA else 1f },
+                    contentAlignment = Alignment.Center,
+                ) {
                     Dock(home.mainCalendarMonth == null, stringResource(R.string.quick_home)) { home.goHome() }
+                    // 下の行の項目は個別に動くので、音声操作の間は上に触れ受けを置いて中止にする。
+                    if (voiceLock) Box(Modifier.matchParentSize().clickable(interactionSource = null, indication = null) { home.voice.cancel() })
                 } else ScreenPanel(
                     height = b.panel.dp,
                     statusHeight = b.status.dp,
@@ -199,11 +214,12 @@ fun BerryBody(
                     },
                     statusIndicators = statusIndicators,
                 )
-                FunctionRow(
+                Box(Modifier.graphicsLayer { alpha = if (voiceLock) DIMMED_ALPHA else 1f }) { FunctionRow(
                     functionRowHeight.dp,
                     // 機能列 5 キー(§5.3)。送話・戻る・終話は、選択待ちなら割り当て、割り当て済みなら起動、
                     // 未割り当てなら固定機能(2026-11-17 オーナー決定)。
-                    onKeyTap = { key ->
+                    onKeyTap = onKeyTap@{ key ->
+                        if (voiceLock) return@onKeyTap voiceKeyPress(null)
                         val id = key.assignId
                         val pickingNow = picking
                         val assigned = id?.let { assignments.keys[it] }
@@ -219,21 +235,38 @@ fun BerryBody(
                             }
                         }
                     },
-                    onKeyLongPress = { key ->
+                    onKeyLongPress = onKeyLongPress@{ key ->
+                        if (voiceLock) return@onKeyLongPress voiceKeyPress(null)
                         val id = key.assignId
                         val pickingNow = picking
                         if (id != null) {
                             if (pickingNow != null) assignPicked(id, resources.functionKeyName(key), pickingNow) else home.startEdit(EditTarget.Function(key))
                         }
                     },
-                )
+                ) }
                 KeyRows(
                     keyRowHeight = keyRowHeight.dp,
                     fretHeight = b.fret.dp,
                     iconFor = { spec -> rememberAppIcon(app.catalog, assignments.keys[spec.id]) },
-                    onTap = { spec -> if (picking != null) assignPicked(spec.id, resources.keyName(spec), picking) else launch(assignments.keys[spec.id]) },
+                    onTap = { spec ->
+                        when {
+                            voiceLock -> voiceKeyPress(spec.id)
+                            picking != null -> assignPicked(spec.id, resources.keyName(spec), picking)
+                            else -> launch(assignments.keys[spec.id])
+                        }
+                    },
                     // 長押し: 割り当て編集(§7)。選択待ちの間はタップと同じく、そのキーに割り当てる。
-                    onLongPress = { spec -> if (picking != null) assignPicked(spec.id, resources.keyName(spec), picking) else home.startEdit(EditTarget.Key(spec)) },
+                    // 0 のキーだけは音声操作(§5.5。D27)。0 のキーの割り当ては設定の割り当て一覧と「キーに割り当て」から変える。
+                    onLongPress = { spec ->
+                        when {
+                            voiceLock -> voiceKeyPress(spec.id)
+                            picking != null -> assignPicked(spec.id, resources.keyName(spec), picking)
+                            spec.id == KeyLayout.VOICE_KEY_ID -> startVoice()
+                            else -> home.startEdit(EditTarget.Key(spec))
+                        }
+                    },
+                    highlightKey = if (home.voice.state != null) KeyLayout.VOICE_KEY_ID else null,
+                    dimmed = voiceLock,
                 )
                 Spacer(Modifier.height(b.bottomMargin.dp))
             }
@@ -247,6 +280,12 @@ fun BerryBody(
                     Modifier.fillMaxWidth().fillMaxHeight().background(Color(0x66000000))
                         .clickable(interactionSource = null, indication = null) { home.back() },
                 )
+            }
+            // 音声操作(§5.5。案 C): 画面部だけ暗くして中央にカード(メイン縦は上半分の PortraitTop に出す)。
+            // カードを出している間はキーボードを暗くし、0 のキー以外に触れたら中止(振り分けは各キーの押し操作 voiceKeyPress)。
+            if (!keyboardOnly) VoicePanel(home.voice, Modifier.fillMaxWidth().height(b.panel.dp))
+            if (voiceLock) {
+                VoiceKeyboardHint(Modifier.fillMaxWidth().fillMaxHeight().padding(top = if (keyboardOnly) 0.dp else b.panel.dp))
             }
             if (total > heightDp + 0.5f) {
                 // 狭すぎて収まらない(§3.2 の下限 40dp を優先した結果)。

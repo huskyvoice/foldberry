@@ -92,6 +92,9 @@ object KeyLayout {
      */
     const val DOCK_CAMERA_ID = "DOCK_CAMERA"
 
+    /** 長押しで音声操作を始めるキー(0・マイクの刻印。§5.5。D27)。短押しは他のキーと同じく割り当てアプリの起動。 */
+    const val VOICE_KEY_ID = "ZERO"
+
     /**
      * メイン画面の一覧の枠に置く自由枠(アプリの割り当て枠。§4.5。2026-11-17 オーナー決定)の数と保存キー。
      * 縦横で共通の 8 枠。保存キーは `MAIN_SLOT_1`〜`MAIN_SLOT_8`(変えると割り当てが外れる)。

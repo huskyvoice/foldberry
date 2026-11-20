@@ -359,6 +359,24 @@ class AssignmentsTest {
     }
 
     @Test
+    fun 音声操作の言語は無いファイルと未知の値で画面の言語に合わせる() {
+        val old = AssignmentsCodec.decode("""{"version":1,"keys":{"W":{"package":"p","activity":"a"}}}""") as AssignmentsCodec.Decoded.Ok
+        assertEquals(VoiceLanguage.DISPLAY, old.value.voice.voiceLanguage)
+        val odd = AssignmentsCodec.decode("""{"version":1,"voice":{"language":"fr"}}""") as AssignmentsCodec.Decoded.Ok
+        assertEquals(VoiceSetting(), odd.value.voice)
+        // 壊れていても割り当ては残す。
+        val broken = AssignmentsCodec.decode("""{"version":1,"keys":{"W":{"package":"p","activity":"a"}},"voice":{"language":["ja"]}}""") as AssignmentsCodec.Decoded.Ok
+        assertEquals(AppRef("p", "a"), broken.value.keys["W"])
+        assertEquals(VoiceSetting(), broken.value.voice)
+    }
+
+    @Test
+    fun 音声操作の言語を書いて読み戻すと同じになる() {
+        val a = Assignments.EMPTY.withKey("W", mail).copy(voice = VoiceSetting(language = VoiceLanguage.JA.id))
+        assertEquals(AssignmentsCodec.Decoded.Ok(a), AssignmentsCodec.decode(AssignmentsCodec.encode(a)))
+    }
+
+    @Test
     fun カレンダーとHubの入れ替え() {
         assertEquals(MainPanelKind.HUB, MainPanelKind.CALENDAR.flipped())
         assertEquals(MainPanelKind.CALENDAR, MainPanelKind.HUB.flipped())

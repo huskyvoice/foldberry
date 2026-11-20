@@ -6,6 +6,7 @@ import com.foldberry.launcher.R
 import com.foldberry.launcher.data.BackgroundPreset
 import com.foldberry.launcher.data.DateStyle
 import com.foldberry.launcher.data.HourFormat
+import com.foldberry.launcher.data.VoiceLanguage
 import com.foldberry.launcher.data.HubPreview
 import com.foldberry.launcher.data.MainPanelKind
 import com.foldberry.launcher.data.NameGroup
@@ -76,6 +77,13 @@ internal fun HourFormat.labelRes(): Int = when (this) {
     HourFormat.SYSTEM -> R.string.hour_format_system
     HourFormat.H12 -> R.string.hour_format_12
     HourFormat.H24 -> R.string.hour_format_24
+}
+
+/** 音声操作の言語の名前(設定シートの選択肢。§5.5)。 */
+internal fun VoiceLanguage.labelRes(): Int = when (this) {
+    VoiceLanguage.DISPLAY -> R.string.voice_language_display
+    VoiceLanguage.JA -> R.string.voice_language_ja
+    VoiceLanguage.EN -> R.string.voice_language_en
 }
 
 /** 日付・曜日の書式の名前(設定シートの選択肢。§4.2)。 */

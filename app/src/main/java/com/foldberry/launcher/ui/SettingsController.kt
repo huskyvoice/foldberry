@@ -30,6 +30,7 @@ import com.foldberry.launcher.data.BackgroundSetting
 import com.foldberry.launcher.data.CatalogState
 import com.foldberry.launcher.data.DateStyle
 import com.foldberry.launcher.data.HourFormat
+import com.foldberry.launcher.data.VoiceLanguage
 import com.foldberry.launcher.data.HubPreview
 import com.foldberry.launcher.data.ImportResult
 import com.foldberry.launcher.data.MainPanelKind
@@ -97,6 +98,9 @@ class SettingsController internal constructor(
 
     /** 大時計の 12/24 時間表記を変える(§4.2 / §8)。即時保存。 */
     fun setHourFormat(format: HourFormat) = store.update { it.copy(clock = it.clock.copy(hourFormat = format.id)) }
+
+    /** 音声操作の言語(§5.5 / §8)。即時保存。 */
+    fun setVoiceLanguage(language: VoiceLanguage) = store.update { it.copy(voice = it.voice.copy(language = language.id)) }
 
     /** 触覚フィードバックのオン/オフ(§5.4 / §8)。即時保存。 */
     fun setHaptics(on: Boolean) = store.update { it.copy(feedback = it.feedback.copy(haptics = on)) }

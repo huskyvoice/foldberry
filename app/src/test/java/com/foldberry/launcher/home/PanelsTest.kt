@@ -21,6 +21,12 @@ class PanelsTest {
     }
 
     @Test
+    fun 音声操作はいちばん手前で最初に閉じる() {
+        assertEquals(Panel.VOICE, panelToClose(setOf(Panel.VOICE, Panel.SETTINGS, Panel.KEY_PICK)))
+        assertEquals(Panel.SETTINGS, panelToClose(setOf(Panel.SETTINGS, Panel.KEY_PICK)))
+    }
+
+    @Test
     fun キー選択待ちはいちばん奥で最後に閉じる() {
         assertEquals(Panel.ASSIGN, panelToClose(setOf(Panel.KEY_PICK, Panel.ASSIGN)))
         // 選択待ち中にトラックパッドで一覧を重ねたら、見えている一覧を先に閉じて選択待ちに戻る。

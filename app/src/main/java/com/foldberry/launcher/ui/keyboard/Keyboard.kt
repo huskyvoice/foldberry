@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -33,9 +34,14 @@ fun Fret(height: Dp) {
     Box(Modifier.fillMaxWidth().height(height).background(FretBrush, alpha = 0.8f))
 }
 
+/** 音声操作の間に暗くするキーの濃さ(§5.5)。 */
+internal const val DIMMED_ALPHA = 0.4f
+
 /**
  * 機能列の下のフレットから 4 段目までの、自由割り当てキーの部分。
  * @param iconFor キーに割り当てたアプリのアイコン(未割り当て・読込み前は null)
+ * @param highlightKey 主刻印を青くするキー(音声操作を開いている間の 0 のキー。§5.5)
+ * @param dimmed highlightKey 以外のキーを暗くする(音声操作の間)
  */
 @Composable
 fun KeyRows(
@@ -44,11 +50,13 @@ fun KeyRows(
     iconFor: @Composable (KeySpec) -> ImageBitmap? = { null },
     onTap: (KeySpec) -> Unit = {},
     onLongPress: (KeySpec) -> Unit = {},
+    highlightKey: String? = null,
+    dimmed: Boolean = false,
 ) {
     Column(Modifier.fillMaxWidth()) {
         KeyLayout.rows.forEach { row ->
             Fret(fretHeight)
-            KeyRow(row, keyRowHeight, iconFor, onTap, onLongPress)
+            KeyRow(row, keyRowHeight, iconFor, onTap, onLongPress, highlightKey, dimmed)
         }
     }
 }
@@ -61,6 +69,8 @@ private fun KeyRow(
     iconFor: @Composable (KeySpec) -> ImageBitmap?,
     onTap: (KeySpec) -> Unit,
     onLongPress: (KeySpec) -> Unit,
+    highlightKey: String?,
+    dimmed: Boolean,
 ) {
     BoxWithConstraints(Modifier.fillMaxWidth().height(height).padding(horizontal = SidePadding, vertical = RowPaddingV)) {
         val colWidth = (maxWidth - KeyGap * (KeyLayout.COLUMNS - 1)) / KeyLayout.COLUMNS
@@ -71,8 +81,11 @@ private fun KeyRow(
                 rowHeight = height,
                 modifier = Modifier
                     .offset(x = (colWidth + KeyGap) * (spec.column - 1))
-                    .size(width = colWidth * spec.span + KeyGap * (spec.span - 1), height = keyHeight),
+                    .size(width = colWidth * spec.span + KeyGap * (spec.span - 1), height = keyHeight)
+                    // 音声操作の間は青くしたキー以外を暗くする(暗幕を上に重ねると青いキーまで暗くなるため、キーごとに。§5.5)。
+                    .graphicsLayer { alpha = if (dimmed && spec.id != highlightKey) DIMMED_ALPHA else 1f },
                 assignedIcon = iconFor(spec),
+                highlight = spec.id == highlightKey,
                 onTap = { onTap(spec) },
                 onLongPress = { onLongPress(spec) },
             )

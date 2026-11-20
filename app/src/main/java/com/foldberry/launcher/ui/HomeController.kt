@@ -10,10 +10,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import com.foldberry.launcher.FoldBerryApp
 import com.foldberry.launcher.R
 import com.foldberry.launcher.data.AppEntry
 import com.foldberry.launcher.data.AppRef
 import com.foldberry.launcher.data.Assignments
+import com.foldberry.launcher.data.MainPanelKind
+import com.foldberry.launcher.data.flipped
 import com.foldberry.launcher.home.Panel
 import com.foldberry.launcher.home.panelToClose
 import com.foldberry.launcher.keyboard.AssignmentSlot
@@ -90,6 +94,8 @@ internal fun AssignmentSlot.editTarget(): EditTarget = when (this) {
 class HomeController internal constructor(
     val settings: SettingsController,
     private val scope: CoroutineScope,
+    /** 音声操作(0 のキーの長押し。§5.5)。開閉で作り直されないここで持ち、戻る・終話・開閉で中止する。 */
+    val voice: VoiceController,
 ) {
     /** 割り当てシートの対象(キー・枠の長押し)。 */
     internal var editing by mutableStateOf<EditTarget?>(null)
@@ -133,6 +139,7 @@ class HomeController internal constructor(
 
     val openPanels: Set<Panel>
         get() = buildSet {
+            if (voice.isOpen) add(Panel.VOICE)
             if (settings.showing) add(Panel.SETTINGS)
             if (editing != null) add(Panel.ASSIGN)
             if (menuApp != null) add(Panel.APP_MENU)
@@ -145,6 +152,7 @@ class HomeController internal constructor(
     /** 戻る(機能列・端末の戻る): 手前から 1 つ閉じる。何も開いていなければ何もしない。 */
     fun back() {
         when (panelToClose(openPanels)) {
+            Panel.VOICE -> voice.cancel()
             Panel.SETTINGS -> settings.back()
             Panel.ASSIGN -> finishEdit()
             Panel.APP_MENU -> menuApp = null
@@ -158,6 +166,7 @@ class HomeController internal constructor(
 
     /** 終話(機能列・ホームジェスチャー): すべて閉じてホーム初期状態に戻す。 */
     fun goHome() {
+        voice.cancel()
         closePanels()
         mainCalendarMonth = null
         settings.dismiss()
@@ -254,6 +263,7 @@ class HomeController internal constructor(
 
     /** 開閉(カバー⇔メイン)したとき: ホーム初期状態に戻す(§3.1)。読込みの確認待ちは残す(SettingsController 参照)。 */
     fun onLayoutChanged() {
+        voice.cancel()
         closePanels()
         mainCalendarMonth = null
         settings.onLayoutChanged()
@@ -274,5 +284,34 @@ class HomeController internal constructor(
 fun rememberHomeController(): HomeController {
     val settings = rememberSettingsController()
     val scope = rememberCoroutineScope()
-    return remember { HomeController(settings, scope) }
+    val app = LocalContext.current.applicationContext as FoldBerryApp
+    return remember {
+        HomeController(settings, scope, VoiceController(app, app.catalog, app.store, scope)).also { home ->
+            home.voice.host = object : VoiceHost {
+                override fun openSettings(assignments: Boolean) {
+                    home.openSettings()
+                    if (assignments) settings.openAssignments()
+                }
+
+                // いまの構成の枠(カバー=hub.coverPanel、メイン=hub.mainPanel)を切り替える。見出しを払うのと同じ保存(§4.5・D24)。
+                override fun switchPanel(hub: Boolean?): Boolean {
+                    val cover = home.isCover
+                    val setting = app.store.state.value.hub
+                    val current = if (cover) setting.cover else setting.panel
+                    val next = when (hub) {
+                        null -> current.flipped()
+                        true -> MainPanelKind.HUB
+                        false -> MainPanelKind.CALENDAR
+                    }
+                    app.store.update { if (cover) it.copy(hub = it.hub.copy(coverPanel = next.id)) else it.copy(hub = it.hub.copy(mainPanel = next.id)) }
+                    // メインで一覧・フォルダを重ねていると切り替えた枠が見えないので閉じる。
+                    if (!cover) {
+                        home.mainListOpen = false
+                        home.openFolder = null
+                    }
+                    return next == MainPanelKind.HUB
+                }
+            }
+        }
+    }
 }

@@ -79,6 +79,8 @@ internal fun PortraitTop(home: HomeController, modifier: Modifier) {
                 }
             }
             HomeSheets(home, topInset = status)
+            // 音声操作のカード(§5.5)。メイン縦は上半分全体を暗くして中央に出す(下半分のキーボードの暗幕は BerryBody)。
+            VoicePanel(home.voice, Modifier.fillMaxSize())
         }
     }
 }

@@ -39,6 +39,15 @@
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
     <!--
+      音声操作(0 のキーの長押し。§5.5。D27。2026-11-19)。マイクは初めて長押ししたとき、連絡先は「〇〇に電話」と言ったときだけ許可を求める。
+      認識は端末内だけ(声を外に出さない)なので INTERNET は使わない。
+    -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <!-- 音声操作のアラーム・タイマー(時計アプリへ ACTION_SET_ALARM / SET_TIMER)。通常権限で許可ダイアログは出ない。 -->
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+
+    <!--
       起動できるアプリの一覧(§6 / §10)。Android 11 以降はパッケージの可視性が制限されるため、
       ランチャーに出るアプリだけを見えるように宣言する。全パッケージ取得の権限(QUERY_ALL_PACKAGES)は使わない。
     -->
@@ -53,6 +62,10 @@
         </intent>
         <intent>
             <action android:name="android.media.action.STILL_IMAGE_CAMERA" />
+        </intent>
+        <!-- 音声操作で端末の音声認識サービスに接続するため(§5.5。無いと Android 11 以降は認識が使えない扱いになる) -->
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
         </intent>
     </queries>
 

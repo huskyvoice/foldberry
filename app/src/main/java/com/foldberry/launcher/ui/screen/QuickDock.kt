@@ -4,10 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.database.ContentObserver
-import android.hardware.camera2.CameraAccessException
-import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
-import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
@@ -54,6 +51,9 @@ import com.foldberry.launcher.ui.icons.FoldBerryIcons
 import com.foldberry.launcher.ui.keyboard.pressFeedback
 import com.foldberry.launcher.ui.keyboard.rememberPressState
 import com.foldberry.launcher.ui.rememberRingerStatus
+import com.foldberry.launcher.ui.setTorch
+import com.foldberry.launcher.ui.toggleVibrate
+import com.foldberry.launcher.ui.torchCameraId
 
 /** 下の行の高さ(§4.3。モック docs/mock/calendar-mock.html)。 */
 val QuickDockHeight = 48.dp
@@ -100,7 +100,7 @@ fun QuickDock(
             }
             QuickItem("quick-home", FoldBerryIcons.Home, homeDescription, if (homeActive) Color.White else IconOff, big = true, onTap = onHome)
             QuickItem("quick-light", FoldBerryIcons.Flashlight, stringResource(R.string.quick_light), if (torch == true) IconOn else IconOff) {
-                if (!toggleTorch(context, torch == true)) toast(R.string.quick_light_failed)
+                if (!setTorch(context, torch != true)) toast(R.string.quick_light_failed)
             }
             val vibrate = ringer == RingerStatus.VIBRATE
             QuickItem(
@@ -212,17 +212,6 @@ private fun openSystemSettings(context: Context): Boolean = try {
     false
 }
 
-/** フラッシュのある背面カメラの ID。無ければ null。 */
-private fun torchCameraId(manager: CameraManager): String? = try {
-    manager.cameraIdList.firstOrNull { id ->
-        val c = manager.getCameraCharacteristics(id)
-        c.get(CameraCharacteristics.FLASH_INFO_AVAILABLE) == true &&
-            c.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK
-    }
-} catch (e: CameraAccessException) {
-    null
-}
-
 /**
  * ライトの点灯状態。null=フラッシュが無い/使えない。setTorchMode とその監視は権限不要
  * (カメラの権限は使わない。§10)。カメラアプリが使っている間は使えない状態になる。
@@ -247,34 +236,6 @@ private fun rememberTorch(): State<Boolean?> {
         onDispose { if (id != null) manager.unregisterTorchCallback(callback) }
     }
     return state
-}
-
-private fun toggleTorch(context: Context, on: Boolean): Boolean {
-    val manager = context.getSystemService(CameraManager::class.java)
-    val id = torchCameraId(manager) ?: return false
-    return try {
-        manager.setTorchMode(id, !on)
-        true
-    } catch (e: CameraAccessException) {
-        false
-    } catch (e: IllegalArgumentException) {
-        false
-    }
-}
-
-/**
- * マナー: 通常⇔バイブの 2 段(2026-11-17 オーナー決定。サイレントへは切り替えない)。サイレント中に押したら通常へ戻す。
- * おやすみモード中などで変えられないと SecurityException になるので false を返す(おやすみモードへのアクセスは使わない。§10)。
- */
-private fun toggleVibrate(context: Context): Boolean {
-    val audio = context.getSystemService(AudioManager::class.java)
-    val next = if (audio.ringerMode == AudioManager.RINGER_MODE_NORMAL) AudioManager.RINGER_MODE_VIBRATE else AudioManager.RINGER_MODE_NORMAL
-    return try {
-        audio.ringerMode = next
-        audio.ringerMode == next
-    } catch (e: SecurityException) {
-        false
-    }
 }
 
 /** 画面の自動回転のオン/オフ。読むのは権限不要、書くのは「システム設定の変更」の許可が要る(§10)。 */

@@ -30,6 +30,7 @@ import com.foldberry.launcher.keyboard.KeyLayout
 import com.foldberry.launcher.keyboard.KeySpec
 import com.foldberry.launcher.keyboard.Legend
 import com.foldberry.launcher.ui.LocalAssignedIconFilter
+import com.foldberry.launcher.ui.SheetAccent
 import com.foldberry.launcher.ui.icons.FoldBerryIcons
 import kotlin.math.tan
 
@@ -53,6 +54,7 @@ private const val ASSIGNED_ICON_RATIO = 0.3f
 
 /**
  * @param assignedIcon 割り当て済みアプリのアイコン。null なら未割り当て(実機の副刻印を薄く出す)。D13
+ * @param highlight 主刻印をアクセントの青にする(音声操作を開いている間の 0 のキー。§5.5)
  */
 @Composable
 fun KeyCap(
@@ -62,6 +64,7 @@ fun KeyCap(
     assignedIcon: ImageBitmap? = null,
     onTap: (() -> Unit)? = null,
     onLongPress: (() -> Unit)? = null,
+    highlight: Boolean = false,
 ) {
     val pressed = rememberPressState()
     val tilt = KeyLayout.tiltOf(spec)
@@ -152,7 +155,7 @@ fun KeyCap(
         Box(Modifier.align(Alignment.BottomCenter).padding(bottom = rowHeight * 0.12f)) {
             val isWord = (spec.main as? Legend.Text)?.text?.let { it.length > 1 } == true
             val size = if (isWord) mainSize * 0.78f else mainSize
-            Legend(spec.main, color = MainLegend, size = rowHeight * MAIN_RATIO * 1.1f, fontSize = size, weight = FontWeight.Medium)
+            Legend(spec.main, color = if (highlight) SheetAccent else MainLegend, size = rowHeight * MAIN_RATIO * 1.1f, fontSize = size, weight = FontWeight.Medium)
         }
     }
 }

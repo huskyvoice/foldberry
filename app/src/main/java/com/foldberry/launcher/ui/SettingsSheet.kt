@@ -55,6 +55,7 @@ import com.foldberry.launcher.data.BackgroundSetting
 import com.foldberry.launcher.data.ClockText
 import com.foldberry.launcher.data.DateStyle
 import com.foldberry.launcher.data.HourFormat
+import com.foldberry.launcher.data.VoiceLanguage
 import com.foldberry.launcher.data.HubPreview
 import com.foldberry.launcher.data.ImportResult
 import com.foldberry.launcher.data.MainPanelKind
@@ -114,6 +115,7 @@ fun SettingsSheet(
     language: String,
     dateStyle: DateStyle,
     hourFormat: HourFormat,
+    voiceLanguage: VoiceLanguage,
     grayscaleIcons: Boolean,
     haptics: Boolean,
     notificationAllowed: Boolean,
@@ -127,6 +129,7 @@ fun SettingsSheet(
     onSelectLanguage: (String) -> Unit,
     onSelectDateStyle: (DateStyle) -> Unit,
     onSelectHourFormat: (HourFormat) -> Unit,
+    onSelectVoiceLanguage: (VoiceLanguage) -> Unit,
     onGrayscaleIcons: (Boolean) -> Unit,
     onHaptics: (Boolean) -> Unit,
     onNotificationAccess: () -> Unit,
@@ -197,6 +200,10 @@ fun SettingsSheet(
                 if (count == 0) stringResource(R.string.assign_list_empty) else pluralStringResource(R.plurals.assign_list_desc, count, count),
                 onClick = assignmentList.onOpen,
             ) { CChevron() }
+            // 音声操作で話す言葉(§5.5)。言語ごとに端末内の音声モデルが要る。
+            CRow(FoldBerryIcons.Line.Mic, stringResource(R.string.voice_language_title), stringResource(R.string.voice_language_desc), onClick = {
+                onSelectVoiceLanguage(VoiceLanguage.entries.next(voiceLanguage))
+            }) { CValue(stringResource(voiceLanguage.labelRes())) }
             CRow(FoldBerryIcons.Line.Vibrate, stringResource(R.string.haptics_title), stringResource(R.string.haptics_desc), onClick = {
                 onHaptics(!haptics)
             }) { CCheck(haptics) }

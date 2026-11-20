@@ -1,17 +1,11 @@
 package com.foldberry.launcher.ui
 
 import android.Manifest
-import android.content.Intent
 import android.database.ContentObserver
-import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.provider.CalendarContract
-import android.provider.Settings
 import android.util.Log
-import androidx.activity.compose.LocalActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.State
@@ -72,38 +66,14 @@ fun rememberUpcomingEvents(now: LocalDateTime): List<CalendarEvent>? {
     return events?.let { CalendarEvents.upcoming(it, now) }
 }
 
-private const val PREFS = "foldberry"
-
-/** カレンダーの許可を一度でも断られたか(断られて rationale が出る状態になったら記録する)。 */
-private const val KEY_CALENDAR_DENIED = "calendar_permission_denied"
-
 /**
  * カレンダーの読み取りの許可を求める(予定の場所のタップ。§10)。断られたあと、もう確認を出せない(2 回断られた)ときはアプリ情報の画面を開く。
  * 結果は StatusPermissionEvents で知らせ、rememberCalendarEvents が読み直す。
  */
 @Composable
 fun rememberCalendarPermissionRequest(): () -> Unit {
-    val context = LocalContext.current
-    val activity = LocalActivity.current
-    val prefs = remember(context) { context.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE) }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        // 断られたことがあり(記録あり)、今回も確認が出せなかった(rationale なし)ときだけアプリ情報を開く。
-        // 初めての確認を外側タップ・戻るで閉じただけのときは開かない(rationale は false だが記録が無い。2026-11-19 refuter の指摘)。
-        val deniedBefore = prefs.getBoolean(KEY_CALENDAR_DENIED, false)
-        val rationale = activity?.shouldShowRequestPermissionRationale(Manifest.permission.READ_CALENDAR) == true
-        if (!granted && rationale) prefs.edit().putBoolean(KEY_CALENDAR_DENIED, true).apply()
-        if (!granted && deniedBefore && !rationale && activity != null) {
-            // 「今後表示しない」相当で確認が出ずに断られた: 自分で許可できるようアプリ情報を開く。
-            try {
-                context.startActivity(
-                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                )
-            } catch (e: android.content.ActivityNotFoundException) {
-                Log.w(LOG_TAG, "アプリ情報を開けません", e)
-            }
-        }
+    val request = rememberPermissionRequest(Manifest.permission.READ_CALENDAR, deniedKey = "calendar_permission_denied") {
         StatusPermissionEvents.changed()
     }
-    return { launcher.launch(Manifest.permission.READ_CALENDAR) }
+    return { request() }
 }

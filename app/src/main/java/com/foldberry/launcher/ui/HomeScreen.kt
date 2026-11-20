@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
@@ -24,6 +25,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.window.layout.FoldingFeature
 import androidx.window.layout.WindowInfoTracker
 import androidx.window.layout.WindowLayoutInfo
@@ -55,6 +59,14 @@ fun HomeScreen(homeEvents: Flow<Unit>) {
     // 端末の戻る = 戻るキー。何も開いていなくても常に受けて何もしない(§5.3)。
     // システムに任せると MainActivity が finish し、OS がホームを作り直して再表示のように見えるため(v0.6.1 で実機確認)。
     BackHandler { home.back() }
+    // FoldBerry が裏に回ったら音声操作を中止する(マイクを使ったまま残さない。メイン横の右の枠など、
+    // 聞いている間も押せる場所からアプリを開いたときもここで止まる。§5.5)。
+    DisposableEffect(activity) {
+        val owner = activity as? LifecycleOwner ?: return@DisposableEffect onDispose { }
+        val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_STOP) home.voice.cancel() }
+        owner.lifecycle.addObserver(observer)
+        onDispose { owner.lifecycle.removeObserver(observer) }
+    }
 
     BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black)) {
         val info = layoutInfo
@@ -153,6 +165,8 @@ fun HomeScreen(homeEvents: Flow<Unit>) {
                             }
                         }
                     }
+                    // 音声操作の間は右の枠(ステータス行を含む)も暗くし、触れたら中止(§5.5。2026-11-19 オーナー指定)。
+                    VoiceSideCurtain(home.voice, Modifier.fillMaxSize())
                 }
             }
         }

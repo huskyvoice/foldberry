@@ -250,11 +250,12 @@ object FoldBerryIcons {
     private val Backspace = stroke("backspace", 24f, 1.8f, "M8.5 6H20v12H8.5L3 12z", "M11 9.5l5 5M16 9.5l-5 5")
     private val Enter = stroke("enter", 24f, 1.9f, "M19 5v7H6", "M9.5 8.5L6 12l3.5 3.5")
     private val Shift = stroke("shift", 24f, 1.8f, "M12 4l7.5 8H15v7H9v-7H4.5z")
-    private val Mic = stroke(
-        "mic", 24f, 1.8f,
+    /** マイク(0 のキーの刻印と設定の「音声操作の言語」で共通。2026-11-19)。 */
+    private val MIC_PATHS = arrayOf(
         "M12 3.5a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0v-5a3 3 0 0 1 3-3z",
         "M6 11.5a6 6 0 0 0 12 0M12 17.5V21",
     )
+    private val Mic = stroke("mic", 24f, 1.8f, *MIC_PATHS)
     private val Space = stroke("space", 40f, 2.2f, "M3 3v5h34V3", viewportH = 12f)
     private val Speaker = stroke(
         "speaker", 24f, 2f,
@@ -283,6 +284,7 @@ object FoldBerryIcons {
         val Search = line("search", "M17 11a6 6 0 1 1-12 0a6 6 0 1 1 12 0z", "M20 20l-4.5-4.5")
         val Trash = line("trash", "M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12")
         val Image = line("image", "M6 4h12a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z", "M11 10a2 2 0 1 1-4 0a2 2 0 1 1 4 0z", "M21 16l-5-5-9 9")
+        val Mic = line("mic", *MIC_PATHS)
         val Globe = line("globe", "M21 12a9 9 0 1 1-18 0a9 9 0 1 1 18 0z", "M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18")
         val Clock = line("clock", "M21 12a9 9 0 1 1-18 0a9 9 0 1 1 18 0z", "M12 7v5l3 2")
         val Music = line("music", *MUSIC_PATHS)

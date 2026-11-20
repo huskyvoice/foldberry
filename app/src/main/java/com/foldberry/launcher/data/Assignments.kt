@@ -151,6 +151,34 @@ data class HubSetting(
     fun normalized(): HubSetting = HubSetting(mainPanel = panel.id, preview = previewMode.id, coverPanel = cover.id)
 }
 
+/** 音声操作(§5.5。D27)で話す言葉。id は保存に使う。DISPLAY は画面の言語に合わせる。 */
+enum class VoiceLanguage(val id: String) {
+    DISPLAY("display"),
+    JA("ja"),
+    EN("en"),
+    ;
+
+    companion object {
+        val DEFAULT = DISPLAY
+
+        fun resolve(id: String): VoiceLanguage = entries.firstOrNull { it.id == id } ?: DEFAULT
+    }
+}
+
+/**
+ * 音声操作の設定(§5.5 / §8。2026-11-19 追加)。
+ * @param language 話す言葉(VoiceLanguage.id)。認識の言語と言い回しの規則の言語の両方に使う。無いファイルは画面の言語に合わせる
+ */
+@Serializable
+data class VoiceSetting(
+    val language: String = VoiceLanguage.DEFAULT.id,
+) {
+    val voiceLanguage: VoiceLanguage get() = VoiceLanguage.resolve(language)
+
+    /** 未知の値を既定に丸める(読込み時に通す)。 */
+    fun normalized(): VoiceSetting = VoiceSetting(language = voiceLanguage.id)
+}
+
 /** カレンダー ⇔ Hub の入れ替え(枠の見出しの下払い・設定の行。§4.5 / §4.3.1)。 */
 fun MainPanelKind.flipped(): MainPanelKind = if (this == MainPanelKind.CALENDAR) MainPanelKind.HUB else MainPanelKind.CALENDAR
 
@@ -191,6 +219,8 @@ data class Assignments(
      * 1 つの枠は keys(アプリ 1 つ)か folders のどちらか一方だけ(withKey / withFolder が相手を消す)。
      */
     val folders: Map<String, AppFolder> = emptyMap(),
+    /** 2026-11-19 追加(§5.5)。無いファイルは既定値(画面の言語に合わせる)で読む。version は上げない(項目の追加は前の版でも読み捨てられる)。 */
+    val voice: VoiceSetting = VoiceSetting(),
 ) {
     /** キー・枠にアプリを割り当てる(null=解除)。自由枠にアプリを入れたら、その枠のフォルダは消える(枠は一方だけ)。 */
     fun withKey(keyId: String, app: AppRef?): Assignments =
@@ -302,12 +332,13 @@ object AssignmentsCodec {
             parsed.copy(
                 keys = keys, background = parsed.background.normalized(), clock = parsed.clock.normalized(),
                 hub = parsed.hub.normalized(), folders = Assignments.normalizeFolders(keys, parsed.folders),
+                voice = parsed.voice.normalized(),
             ),
         )
     }
 
-    /** 壊れていても割り当てを道連れにしない、後から足した項目(背景 v0.4.0・時計と見た目 v0.5.1・触覚 v0.6.0・Hub v0.7.0)。フォルダ(v0.7.1)は decodeFolders でフォルダごとに読む。 */
-    private val OPTIONAL_SECTIONS = listOf("background", "clock", "appearance", "feedback", "hub")
+    /** 壊れていても割り当てを道連れにしない、後から足した項目(背景 v0.4.0・時計と見た目 v0.5.1・触覚 v0.6.0・Hub v0.7.0・音声操作 2026-11-19)。フォルダ(v0.7.1)は decodeFolders でフォルダごとに読む。 */
+    private val OPTIONAL_SECTIONS = listOf("background", "clock", "appearance", "feedback", "hub", "voice")
 
     /** フォルダ(v0.7.1)をフォルダごとに読む。オブジェクトでない・読めないフォルダだけ捨てる(正規化は decode の normalizeFolders)。 */
     private fun decodeFolders(element: kotlinx.serialization.json.JsonElement?): Map<String, AppFolder> {

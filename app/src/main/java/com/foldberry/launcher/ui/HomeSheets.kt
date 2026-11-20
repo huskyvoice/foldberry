@@ -123,6 +123,8 @@ internal fun HomeSheets(home: HomeController, topInset: Dp) {
             onSelectDateStyle = settings::setDateStyle,
             hourFormat = assignments.clock.hours,
             onSelectHourFormat = settings::setHourFormat,
+            voiceLanguage = assignments.voice.voiceLanguage,
+            onSelectVoiceLanguage = settings::setVoiceLanguage,
             grayscaleIcons = assignments.appearance.grayscaleIcons,
             onGrayscaleIcons = settings::setGrayscaleIcons,
             haptics = assignments.feedback.haptics,
