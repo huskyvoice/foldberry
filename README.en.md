@@ -22,7 +22,7 @@ The physical-style QWERTY keyboard drawn on screen is not for typing — each ke
 
 ## Features
 
-- **Launch apps with keys**: Assign any app to 35 keys (letter keys, symbol keys, etc.) and tap to launch it. Long-press a key to change its assignment.
+- **Launch apps with keys**: Assign any app to 35 keys (letter keys, symbol keys, etc.) and tap to launch it. Long-press a key to change its assignment (in the voice build, the 0 key's long-press starts voice control instead; change its assignment from the assignment list in the settings).
 - **Function row**: Send (phone), Menu (settings), Trackpad (app list), Back, and End (go home). Send, Back and End can also be assigned to apps.
 - **Cover screen and main screen**: The layout switches as you fold and unfold. Assignments are shared between both.
 - **BB10-style screen area**: A custom status row (Wi-Fi, per-SIM signal, Bluetooth, battery), a clock with notification counts by type, a monthly calendar with dots on days that have events, and a shortcut row (flashlight, silent mode, auto-rotate, QR, camera). An icon in the status row shows when an alarm is set.
@@ -30,7 +30,8 @@ The physical-style QWERTY keyboard drawn on screen is not for typing — each ke
 - **Hub**: Show your notification list in place of the calendar (swipe the header down to flip between them). Swipe a row sideways to clear it, or tap "Clear all" to clear the notifications shown.
 - **App list**: A paged app list. Filter apps by name with the search field at the top. Assigned apps get a badge. Long-press to assign, open app info, or uninstall.
 - **Folders**: Put folders holding up to 4 apps into the free slots on the main screen.
-- **Settings**: Background (presets or your photo), language (日本語 / English), clock format, haptics on/off, assignment list, export/import of settings.
+- **Voice control (voice build only)**: Voice control is experimental and only in the "voice build" on the `feature/voice` branch (not in the FoldBerry.apk on Releases). Long-press the 0 key (the one with the mic) and speak to open apps, set alarms and timers, call someone (opens the dialer with their number), turn the flashlight or vibrate mode on and off, assign or clear a letter key ("Assign Gmail to the G key"), open FoldBerry settings, and switch between the calendar and Hub. Works in Japanese and English, and listening happens only on the device (see "Privacy" below).
+- **Settings**: Background (presets or your photo), language (日本語 / English), voice language (voice build only), clock format, haptics on/off, assignment list, export/import of settings.
 
 ## Requirements
 
@@ -81,12 +82,32 @@ All of the following permissions are optional. If you don't grant one, only the 
 | Notification access | Notification counts next to the clock, Hub, music controls | Settings → "Show notification counts" opens the permission screen |
 | Calendar | Up next, calendar dots | Tap the events area ("Show events") to get the prompt |
 | Modify system settings | Auto-rotate in the shortcut row | The permission screen opens the first time you tap auto-rotate |
+| Microphone | Voice control (voice build only) | Prompt the first time you long-press the 0 key |
+| Contacts | "Call …" in voice control (voice build only) (finds the number by name) | Prompt the first time you say "Call …" |
 
 ## Privacy
 
 FoldBerry **never connects to the internet** (it does not have the Internet permission).
 Notification contents, the app list, your assignments and other data are used only on your device and are never sent anywhere.
 There are no ads, analytics, or crash reporting.
+
+### Voice control and downloading the speech model (voice build only)
+
+This section applies only to the voice build on the `feature/voice` branch. The FoldBerry.apk on Releases does not use speech recognition and never downloads a speech model.
+
+Voice control listens only on the device (it never switches to a recognition service that sends your voice elsewhere). So it only works when the speech model for the language you speak is on the device.
+
+When you press "Download" on the voice card, it's not FoldBerry but the device's **Android System Intelligence** (a Google system app) that fetches the speech recognition model for that language from Google's servers. Nothing is downloaded until you press it.
+
+| Item | Details |
+|---|---|
+| What is downloaded | One speech recognition model for the "Voice language" setting (default: the display language) — Japanese (ja-JP) or English (en-US) |
+| From | Google (received by Android System Intelligence; according to Google's published description, through Private Compute Services) |
+| Stored in | Android System Intelligence's own app storage (not visible to you or other apps) |
+| Size | Shown on the device's confirmation screen before the download. Afterwards, check it in Settings → Apps → Android System Intelligence → Storage |
+| Removing it | Clear its data from the same screen (this may also clear data for other Android System Intelligence features) |
+
+If you don't download it, only voice control is unavailable; everything else keeps working. FoldBerry itself still never connects to the internet.
 
 ## Building it yourself
 
