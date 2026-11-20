@@ -1,5 +1,7 @@
 package com.foldberry.launcher.data
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -13,12 +15,39 @@ import java.util.Locale
  * この JSON は M7 の書出しファイルの形式にもそのまま使う(人が読める形式+バージョン番号。§9)。
  */
 
-/** アプリの識別 = パッケージ名+起動画面名(§9)。 */
+/**
+ * アプリの識別 = パッケージ名+起動画面名(§9)。
+ * shortcut があればそのアプリのショートカット(固定=manifest・動的=dynamic。2026-11-20 追加)を指す。
+ * shortcutLabel は割り当てた時点のショートカットの名前(既定のホームでないとショートカットを読めないので、名前を出すために持つ)。
+ * どちらも無いファイルは null(アプリそのもの)で読み、null のときは書かない(古い版の読込みと見た目を変えないため)。
+ */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class AppRef(
     @SerialName("package") val packageName: String,
     val activity: String,
-)
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val shortcut: String? = null,
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val shortcutLabel: String? = null,
+) {
+    /** ショートカットを外したアプリそのものの参照。アプリ一覧との突き合わせ・名前の引き当てに使う。 */
+    val app: AppRef get() = if (shortcut == null && shortcutLabel == null) this else AppRef(packageName, activity)
+
+    // 等価は shortcutLabel を除く(表示用の控えで、言語の切替やアプリ側の改名で変わる)。含めると同じショートカットが
+    // フォルダ・バッジで別物になり、重複した項目で一覧のキーがぶつかって落ちる(2026-11-20 反証で発見)。
+    override fun equals(other: Any?): Boolean =
+        other is AppRef && packageName == other.packageName && activity == other.activity && shortcut == other.shortcut
+
+    override fun hashCode(): Int = (packageName.hashCode() * 31 + activity.hashCode()) * 31 + shortcut.hashCode()
+}
+
+/**
+ * 画面に出す名前。アプリの名前(引けなければ null)に、ショートカットならその名前を「: 」でつなぐ(例: 「Gmail: 新規作成」)。
+ * @param appLabel アプリそのもの(ref.app)の名前
+ */
+fun displayLabel(ref: AppRef, appLabel: String?): String? {
+    val label = ref.shortcutLabel ?: return appLabel
+    return if (appLabel == null) label else "$appLabel: $label"
+}
 
 /** 画面部の内蔵背景プリセット(U4 決定: モック docs/mock/background-mock.html の 1・4・5・6)。id は保存に使う。 */
 enum class BackgroundPreset(val id: String, val label: String) {
@@ -364,9 +393,14 @@ fun reconcile(current: Assignments, installed: List<AppRef>): ReconcileResult? {
 
     var removed = 0
     var remapped = 0
+    // ショートカットはアプリ部分(ref.app)で突き合わせ、付け替えてもショートカットは保つ。
+    // ショートカット自体が消えたかは見ない(既定のホームでないと読めず、全部外してしまうおそれがあるため。起動の失敗で分かる)。
     fun resolve(ref: AppRef): AppRef? = when {
-        ref in exact -> ref
-        else -> firstByPackage[ref.packageName]?.also { remapped++ } ?: run { removed++; null }
+        ref.app in exact -> ref
+        else -> firstByPackage[ref.packageName]?.let { found ->
+            remapped++
+            ref.copy(activity = found.activity)
+        } ?: run { removed++; null }
     }
 
     val keys = current.keys.mapNotNull { (id, ref) -> resolve(ref)?.let { id to it } }.toMap()

@@ -517,4 +517,67 @@ class AssignmentsTest {
         assertEquals(3, a.assignedCount())
         assertTrue(a.clearedAssignments().folders.isEmpty())
     }
+
+    // --- ショートカット(固定・動的。2026-11-20) ---
+
+    private val gm = AppRef("com.google.android.gm", "Main")
+    private val compose = gm.copy(shortcut = "compose", shortcutLabel = "新規作成")
+
+    @Test
+    fun ショートカットも書いて読み戻せアプリには項目を書かない() {
+        val a = Assignments.EMPTY.withKey("W", compose).withKey("E", gm)
+        assertEquals(AssignmentsCodec.Decoded.Ok(a), AssignmentsCodec.decode(AssignmentsCodec.encode(a)))
+        val text = AssignmentsCodec.encode(Assignments.EMPTY.withKey("E", gm))
+        assertFalse(text.contains("shortcut"))
+    }
+
+    @Test
+    fun ショートカットの項目が無いファイルはアプリとして読む() {
+        val text = """{"version":1,"keys":{"W":{"package":"p","activity":"a"}}}"""
+        val ok = AssignmentsCodec.decode(text) as AssignmentsCodec.Decoded.Ok
+        assertEquals(AppRef("p", "a"), ok.value.keys["W"])
+        assertNull(ok.value.keys["W"]?.shortcut)
+    }
+
+    @Test
+    fun ショートカットの等価は保存した名前を見ない() {
+        val renamed = compose.copy(shortcutLabel = "Compose")
+        assertEquals(compose, renamed)
+        assertEquals(compose.hashCode(), renamed.hashCode())
+        assertFalse(compose == gm)
+        // 名前だけ違う同じショートカットをフォルダに足しても重複しない(一覧のキーがぶつかって落ちないように)。
+        val a = Assignments.EMPTY.withFolder("MAIN_SLOT_1", AppFolder("", listOf(compose)))
+        assertEquals(FolderAdd.ALREADY, a.addToFolder("MAIN_SLOT_1", renamed).second)
+        assertEquals(1, a.withFolder("MAIN_SLOT_1", AppFolder("", listOf(compose, renamed))).folders["MAIN_SLOT_1"]?.apps?.size)
+    }
+
+    @Test
+    fun ショートカットのappは持ち主のアプリ() {
+        assertEquals(gm, compose.app)
+        assertEquals(gm, gm.app)
+    }
+
+    @Test
+    fun 表示名はアプリ名とショートカット名をつなぐ() {
+        assertEquals("Gmail: 新規作成", displayLabel(compose, "Gmail"))
+        assertEquals("新規作成", displayLabel(compose, null))
+        assertEquals("Gmail", displayLabel(gm, "Gmail"))
+        assertNull(displayLabel(gm, null))
+    }
+
+    @Test
+    fun 突き合わせはショートカットを保つ() {
+        val a = Assignments.EMPTY.withKey("W", compose)
+        val same = reconcile(a, installed = listOf(gm))!!
+        assertEquals(compose, same.assignments.keys["W"])
+        assertEquals(0, same.remapped)
+        // 起動画面名が変わっても、付け替えた先でショートカットは保つ。
+        val renamed = reconcile(a, installed = listOf(AppRef(gm.packageName, "Main2")))!!
+        assertEquals(compose.copy(activity = "Main2"), renamed.assignments.keys["W"])
+        assertEquals(1, renamed.remapped)
+        // パッケージごと消えたら外す。
+        val gone = reconcile(a, installed = listOf(AppRef("other", "Main")))!!
+        assertNull(gone.assignments.keys["W"])
+        assertEquals(1, gone.removed)
+    }
 }

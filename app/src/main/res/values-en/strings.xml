@@ -26,6 +26,9 @@
     <string name="main_slot_name">Home slot %d</string>
     <string name="assign_filter_hint">Filter by app name</string>
     <string name="assign_clear">Unassign</string>
+    <string name="assign_open_app">Open %1$s</string>
+    <string name="assign_shortcuts">Shortcuts</string>
+    <string name="menu_app_section">App</string>
     <string name="assign_no_match">No matching apps</string>
     <string name="key_assigned">Assigned %2$s to %1$s</string>
     <string name="pick_prompt">Press a key to assign %s</string>

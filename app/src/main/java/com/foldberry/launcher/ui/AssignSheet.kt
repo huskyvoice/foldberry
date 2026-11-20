@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -19,6 +20,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -39,6 +41,7 @@ import com.foldberry.launcher.data.AppEntry
 import com.foldberry.launcher.data.AppRef
 import com.foldberry.launcher.data.Assignments
 import com.foldberry.launcher.data.CatalogState
+import com.foldberry.launcher.data.DefaultApps
 import com.foldberry.launcher.data.filterByName
 import com.foldberry.launcher.keyboard.AssignmentBadge
 import com.foldberry.launcher.keyboard.AssignmentSlot
@@ -62,9 +65,20 @@ fun AssignSheet(
     onDismiss: () -> Unit,
     /** 「フォルダを作る」(メインの自由枠だけ。§4.5)。null なら行を出さない。 */
     onMakeFolder: (() -> Unit)? = null,
+    /** › で開いたアプリ(そのショートカットのページを出す。HomeController.assignShortcutsOf)。null ならアプリの一覧。 */
+    shortcutsOf: AppEntry? = null,
+    /** › を押した(アプリ)・ページの ‹(null)。 */
+    onShowShortcuts: (AppEntry?) -> Unit = {},
 ) {
     var query by rememberSaveable { mutableStateOf("") }
-    val currentLabel = current?.let { ref -> (catalogState as? CatalogState.Loaded)?.apps?.firstOrNull { it.ref == ref }?.label }
+    val loaded = catalogState as? CatalogState.Loaded
+    val currentLabel = current?.let { loaded?.labelOf(it) }
+    // ショートカット(固定・動的。2026-11-20)。読めるのは既定のホームのときだけで、読めなければ空(› が出ない)。
+    val shortcuts by produceState(emptyMap<AppRef, List<AppEntry>>(), catalogState) { value = catalog.shortcuts() }
+    if (shortcutsOf != null) {
+        ShortcutPage(shortcutsOf, shortcuts[shortcutsOf.ref].orEmpty(), current, assignments, loaded, catalog, onPick, onShowShortcuts, onDismiss)
+        return
+    }
     SheetFrame(title = title, onDismiss = onDismiss, trailing = currentLabel, bounce = true) {
         BasicTextField(
             value = query,
@@ -93,7 +107,10 @@ fun AssignSheet(
             CatalogState.Failed -> SheetMessage(stringResource(R.string.catalog_failed))
             is CatalogState.Loaded -> {
                 val matched = filterByName(catalogState.apps, query) { it.label }
-                val currentEntry = current?.let { ref -> catalogState.apps.firstOrNull { it.ref == ref } }
+                // 今の割り当てがショートカットなら、その名前(「Gmail: 新規作成」)の行にする。
+                val currentEntry = current?.let { ref ->
+                    catalogState.entryOf(ref)?.let { if (ref.shortcut == null) it else AppEntry(ref, catalogState.labelOf(ref) ?: it.label) }
+                }
                 // 割り当て済みなら、今のアプリの行と「割り当てを解除」を一覧の外(上)に固定する。
                 // スクロールしても解除が隠れず、今のアプリを探さずに済むように(2026-11-19 オーナー要望)。絞り込み中も出す。
                 if (currentEntry != null) {
@@ -124,6 +141,8 @@ fun AssignSheet(
                         AppRow(
                             entry, selected = entry.ref == current, badges = AssignmentBadge.slotsOf(assignments, entry.ref, catalogState.defaults),
                             catalog = catalog, onClick = { onPick(entry.ref) },
+                            // 行を押す=今までどおりアプリを割り当て。右端の › だけがショートカットのページへ進む。
+                            onChevron = if (shortcuts[entry.ref].isNullOrEmpty()) null else ({ onShowShortcuts(entry) }),
                         )
                     }
                 }
@@ -132,8 +151,55 @@ fun AssignSheet(
     }
 }
 
+/**
+ * › で開いたアプリのショートカットのページ(2026-11-20)。帯は ‹ アプリ名。先頭に「〇〇 を開く」(アプリそのもの)、
+ * 続けてショートカット(rank 順)。各行の右に、その項目を割り当てた枠のバッジ。
+ */
 @Composable
-private fun AppRow(entry: AppEntry, selected: Boolean, badges: List<AssignmentSlot>, catalog: AppCatalog, onClick: () -> Unit) {
+private fun ShortcutPage(
+    owner: AppEntry,
+    items: List<AppEntry>,
+    current: AppRef?,
+    assignments: Assignments,
+    loaded: CatalogState.Loaded?,
+    catalog: AppCatalog,
+    onPick: (AppRef) -> Unit,
+    onShowShortcuts: (AppEntry?) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val defaults = loaded?.defaults ?: DefaultApps()
+    SheetFrame(title = owner.label, onDismiss = onDismiss, onBack = { onShowShortcuts(null) }, bounce = true) {
+        LazyColumn(Modifier.fillMaxWidth()) {
+            item(key = "app") {
+                AppRow(
+                    AppEntry(owner.ref, stringResource(R.string.assign_open_app, owner.label)), selected = owner.ref == current,
+                    badges = AssignmentBadge.slotsOf(assignments, owner.ref, defaults), catalog = catalog, onClick = { onPick(owner.ref) },
+                )
+            }
+            item(key = "title") { CSectionTitle(stringResource(R.string.assign_shortcuts)) }
+            // キーは "sc/" を付ける: ショートカット ID はアプリが自由に決めるので、上の "app"・"title" とぶつからないように。
+            items(items, key = { "sc/${it.ref.shortcut}" }) { entry ->
+                // AppRef の等価は保存した名前を見ないので、言語を変えた後の割り当ても同じ ID なら今のものになる。
+                val selected = entry.ref == current
+                AppRow(
+                    entry, selected = selected, badges = AssignmentBadge.slotsOf(assignments, entry.ref, defaults),
+                    catalog = catalog, onClick = { onPick(entry.ref) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppRow(
+    entry: AppEntry,
+    selected: Boolean,
+    badges: List<AssignmentSlot>,
+    catalog: AppCatalog,
+    onClick: () -> Unit,
+    /** ショートカットを持つアプリなら › を出し、押すとショートカットのページへ。null なら出さない。 */
+    onChevron: (() -> Unit)? = null,
+) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -164,6 +230,13 @@ private fun AppRow(entry: AppEntry, selected: Boolean, badges: List<AssignmentSl
         if (selected) {
             Spacer(Modifier.width(12.dp))
             CRoundCheck()
+        }
+        if (onChevron != null) {
+            // 押し間違えないよう、行の高さいっぱい・幅 56dp を › の押せる範囲にする。
+            Box(
+                Modifier.width(56.dp).fillMaxHeight().clickable(onClick = onChevron),
+                contentAlignment = Alignment.Center,
+            ) { CChevron() }
         }
     }
 }

@@ -37,6 +37,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -66,6 +67,7 @@ import com.foldberry.launcher.FoldBerryApp
 import com.foldberry.launcher.R
 import com.foldberry.launcher.data.AppCatalog
 import com.foldberry.launcher.data.AppEntry
+import com.foldberry.launcher.data.displayLabel
 import com.foldberry.launcher.data.CatalogState
 import com.foldberry.launcher.data.nameGroup
 import com.foldberry.launcher.keyboard.AssignmentBadge
@@ -171,9 +173,18 @@ fun AppListPanel(home: HomeController, modifier: Modifier, bottomInset: Boolean,
             }
         }
         AnimatedPanel(home.menuApp) { entry ->
+            // このアプリのショートカット(既定のホームでなければ空)。開くたびに読む(動的ショートカットは入れ替わるため)。
+            val shortcuts by produceState(emptyList<AppEntry>(), entry) { value = app.catalog.shortcuts()[entry.ref].orEmpty() }
             AppMenuSheet(
                 entry = entry,
                 bottomInset = bottomInset,
+                shortcuts = shortcuts,
+                onAssignShortcut = { sc ->
+                    // 「キーに割り当て」と同じ流れ。帯・トーストには「Gmail: 新規作成」を出す。
+                    home.menuApp = null
+                    home.closeAppList()
+                    home.startPicking(AppEntry(sc.ref, displayLabel(sc.ref, entry.label) ?: sc.label))
+                },
                 onAssignKey = {
                     // キーボードが見えるよう重ね表示を閉じ、押されたキーに割り当てる(BerryBody 側で受ける)。
                     home.menuApp = null

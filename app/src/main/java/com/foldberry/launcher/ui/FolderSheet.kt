@@ -103,6 +103,13 @@ internal fun FolderSheet(
                     CRow(FoldBerryIcons.Line.Trash, stringResource(R.string.folder_remove), onClick = onRemove, titleColor = SheetDanger)
                 }
                 LazyColumn(Modifier.fillMaxWidth()) {
+                    // 選択待ちから足したショートカット(2026-11-20)はアプリの一覧に無いので、先頭に選択済みとして出す(押すと外れる)。
+                    items(apps.filter { it.shortcut != null }, key = { "sc/${it.packageName}/${it.shortcut}" }) { ref ->
+                        FolderAppRow(
+                            AppEntry(ref, catalogState.labelOf(ref) ?: ref.packageName), order = apps.indexOf(ref) + 1, enabled = true,
+                            catalog = catalog, onClick = { update(apps - ref) },
+                        )
+                    }
                     if (shown.isEmpty()) {
                         item(key = "none") { SheetMessage(stringResource(R.string.assign_no_match)) }
                     }

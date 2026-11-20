@@ -76,4 +76,12 @@ class AssignmentBadgeTest {
     fun 全ての割り当て可能キーに空でない短い表記がある() {
         KeyLayout.assignableKeys.forEach { assert(AssignmentBadge.shortLabel(it.id).isNotEmpty()) { it.id } }
     }
+
+    @Test
+    fun ショートカットの割り当てはアプリのバッジに数えない() {
+        val compose = gmail.copy(shortcut = "compose", shortcutLabel = "新規作成")
+        val a = Assignments.EMPTY.withKey("W", compose)
+        assertNull(AssignmentBadge.of(a, gmail))
+        assertEquals("W", AssignmentBadge.of(a, compose))
+    }
 }

@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
+import android.content.pm.ShortcutInfo
 import android.net.Uri
 import android.os.UserManager
 import android.content.pm.PackageManager
@@ -42,7 +43,13 @@ data class AppEntry(val ref: AppRef, val label: String, val removable: Boolean =
 sealed interface CatalogState {
     data object Loading : CatalogState
     /** @param defaults 送話キー・カメラの枠が未割り当てのときに開く既定のアプリ(§8。割り当て一覧・バッジで「既定」として見せる) */
-    data class Loaded(val apps: List<AppEntry>, val defaults: DefaultApps = DefaultApps()) : CatalogState
+    data class Loaded(val apps: List<AppEntry>, val defaults: DefaultApps = DefaultApps()) : CatalogState {
+        /** 一覧の項目(ショートカットなら持ち主のアプリ)。 */
+        fun entryOf(ref: AppRef): AppEntry? = apps.firstOrNull { it.ref == ref.app }
+
+        /** 画面に出す名前(ショートカットは「Gmail: 新規作成」)。一覧に無いアプリはショートカットの名前だけ、それも無ければ null。 */
+        fun labelOf(ref: AppRef): String? = displayLabel(ref, entryOf(ref)?.label)
+    }
     data object Failed : CatalogState
 }
 
@@ -139,18 +146,30 @@ class AppCatalog(private val context: Context, private val scope: CoroutineScope
         }
     }
 
-    /** アイコンを読み込む(キャッシュあり)。見つからなければ null。 */
+    /**
+     * アイコンを読み込む(キャッシュあり)。見つからなければ null。
+     * ショートカットはショートカット自身のアイコン(Gmail の新規作成なら鉛筆)。読めない(既定のホームでない等)ときは
+     * アプリのアイコンを返し、キャッシュしない(既定のホームにされた後で自身のアイコンに変わるように)。
+     */
     suspend fun icon(ref: AppRef, sizePx: Int): ImageBitmap? {
         icons[ref]?.let { return it }
         return withContext(Dispatchers.IO) {
             try {
+                ref.shortcut?.let { id ->
+                    shortcutInfo(ref.packageName, id)
+                        ?.let { launcherApps.getShortcutIconDrawable(it, context.resources.displayMetrics.densityDpi) }
+                        ?.toBitmap(sizePx, sizePx)
+                        ?.asImageBitmap()
+                        ?.also { icons[ref] = it }
+                        ?.let { return@withContext it }
+                }
                 val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
                     .setComponent(ComponentName(ref.packageName, ref.activity))
                 launcherApps.resolveActivity(intent, user)
                     ?.getIcon(0)
                     ?.toBitmap(sizePx, sizePx)
                     ?.asImageBitmap()
-                    ?.also { icons[ref] = it }
+                    ?.also { if (ref.shortcut == null) icons[ref] = it }
             } catch (e: Exception) {
                 Log.w(TAG, "アイコンを読めません: $ref", e)
                 null
@@ -159,12 +178,54 @@ class AppCatalog(private val context: Context, private val scope: CoroutineScope
     }
 
     /**
+     * アプリごとのショートカット(固定=manifest・動的=dynamic。2026-11-20 追加)。キー=アプリ(起動画面)、値=rank 順。
+     * 各項目の ref はショートカットを指し(shortcut・shortcutLabel 入り)、label はショートカットの名前だけ。
+     * 読めるのは既定のホームアプリだけなので、そうでなければ・失敗したら空。
+     */
+    suspend fun shortcuts(): Map<AppRef, List<AppEntry>> = withContext(Dispatchers.IO) {
+        try {
+            if (!launcherApps.hasShortcutHostPermission()) return@withContext emptyMap()
+            val apps = (state.value as? CatalogState.Loaded)?.apps.orEmpty()
+            val query = LauncherApps.ShortcutQuery()
+                .setQueryFlags(LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST or LauncherApps.ShortcutQuery.FLAG_MATCH_DYNAMIC)
+            launcherApps.getShortcuts(query, user).orEmpty()
+                .filter { it.isEnabled && !it.shortLabel.isNullOrBlank() }
+                .sortedBy { it.rank }
+                .mapNotNull { info ->
+                    // 起動画面が無い動的ショートカットは、そのパッケージの最初の起動画面に付ける。
+                    val owner = apps.firstOrNull { it.ref.packageName == info.`package` && it.ref.activity == info.activity?.className }
+                        ?: apps.firstOrNull { it.ref.packageName == info.`package` }
+                        ?: return@mapNotNull null
+                    val label = info.shortLabel.toString()
+                    owner.ref to AppEntry(owner.ref.copy(shortcut = info.id, shortcutLabel = label), label, removable = false)
+                }
+                .groupBy({ it.first }, { it.second })
+        } catch (e: Exception) {
+            Log.w(TAG, "ショートカットを読めません", e)
+            emptyMap()
+        }
+    }
+
+    /** ID で 1 つのショートカットを引く(アイコン用)。読めなければ null。 */
+    private fun shortcutInfo(packageName: String, id: String): ShortcutInfo? {
+        if (!launcherApps.hasShortcutHostPermission()) return null
+        val query = LauncherApps.ShortcutQuery()
+            .setPackage(packageName)
+            .setShortcutIds(listOf(id))
+            .setQueryFlags(
+                LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST or LauncherApps.ShortcutQuery.FLAG_MATCH_DYNAMIC or
+                    LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED,
+            )
+        return launcherApps.getShortcuts(query, user)?.firstOrNull()
+    }
+
+    /**
      * 今の一覧にあるか。長押しメニュー・キー選択待ちの間にアンインストールされたアプリを割り当てないために使う
      * (突き合わせは一覧が変わったときにしか走らないので、後から割り当てた壊れた参照は次の増減まで残る)。
-     * 一覧がまだ無い(読込み中・失敗)ときは確かめられないので true。
+     * 一覧がまだ無い(読込み中・失敗)ときは確かめられないので true。ショートカットは持ち主のアプリで見る。
      */
     fun isListed(ref: AppRef): Boolean =
-        (state.value as? CatalogState.Loaded)?.apps?.any { it.ref == ref } ?: true
+        (state.value as? CatalogState.Loaded)?.apps?.any { it.ref == ref.app } ?: true
 
     /** 端末の「アプリ情報」画面を開く(§6 の長押しメニュー。権限不要)。失敗したら false。 */
     fun openDetails(ref: AppRef): Boolean = try {
@@ -202,14 +263,26 @@ class AppCatalog(private val context: Context, private val scope: CoroutineScope
         false
     }
 
-    /** アプリを起動する。失敗したら false(直前にアンインストール・無効化された等)。 */
+    /**
+     * アプリを起動する。失敗したら false(直前にアンインストール・無効化された等)。
+     * ショートカットはショートカットとして開く。既定のホームでない・アプリ側で消えた/無効にされたときは
+     * IllegalStateException・ActivityNotFoundException になるので false。
+     */
     fun launch(ref: AppRef, sourceBounds: Rect? = null): Boolean = try {
-        launcherApps.startMainActivity(ComponentName(ref.packageName, ref.activity), user, sourceBounds, null)
+        val shortcut = ref.shortcut
+        if (shortcut != null) {
+            launcherApps.startShortcut(ref.packageName, shortcut, sourceBounds, null, user)
+        } else {
+            launcherApps.startMainActivity(ComponentName(ref.packageName, ref.activity), user, sourceBounds, null)
+        }
         true
     } catch (e: ActivityNotFoundException) {
         Log.w(TAG, "起動できません: $ref", e)
         false
     } catch (e: SecurityException) {
+        Log.w(TAG, "起動できません: $ref", e)
+        false
+    } catch (e: IllegalStateException) {
         Log.w(TAG, "起動できません: $ref", e)
         false
     }

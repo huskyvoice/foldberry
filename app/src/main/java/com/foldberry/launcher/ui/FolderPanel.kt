@@ -64,9 +64,9 @@ fun FolderPanel(home: HomeController, index: Int, modifier: Modifier = Modifier)
     // 中身が消えたら(アンインストール・解除)MainHomePanel が閉じる。閉じる動きの間は何も描かない。
     val folder = assignments.folders[KeyLayout.mainSlotId(index)] ?: return
     val entries = remember(folder, catalogState) {
-        val byRef = (catalogState as? CatalogState.Loaded)?.apps?.associateBy { it.ref }.orEmpty()
-        // 一覧に無いアプリ(読込み中)は名前をパッケージ名にして出す。
-        folder.apps.map { ref -> byRef[ref] ?: AppEntry(ref, ref.packageName) }
+        val loaded = catalogState as? CatalogState.Loaded
+        // 一覧に無いアプリ(読込み中)は名前をパッケージ名にして出す。ショートカットは「Gmail: 新規作成」。
+        folder.apps.map { ref -> AppEntry(ref, loaded?.labelOf(ref) ?: ref.packageName) }
     }
     val close = { home.openFolder = null }
 

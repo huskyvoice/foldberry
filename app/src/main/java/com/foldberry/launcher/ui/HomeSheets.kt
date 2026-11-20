@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.foldberry.launcher.FoldBerryApp
 import com.foldberry.launcher.R
+import com.foldberry.launcher.data.AppRef
 import com.foldberry.launcher.data.CatalogState
 import com.foldberry.launcher.data.DefaultApps
 import com.foldberry.launcher.data.NotificationCounter
@@ -50,7 +51,8 @@ internal fun HomeSheets(home: HomeController, topInset: Dp) {
     val catalogState by app.catalog.state.collectAsState()
     val settings = home.settings
     val picking = home.pickingApp
-    val labels = (catalogState as? CatalogState.Loaded)?.apps?.associate { it.ref to it.label }.orEmpty()
+    // ショートカットは「Gmail: 新規作成」(labelOf)。
+    val labelOf: (AppRef) -> String? = { ref -> (catalogState as? CatalogState.Loaded)?.labelOf(ref) }
     val catalogDefaults = (catalogState as? CatalogState.Loaded)?.defaults ?: DefaultApps()
 
     if (picking != null) {
@@ -76,6 +78,8 @@ internal fun HomeSheets(home: HomeController, topInset: Dp) {
                 // 自由枠だけフォルダにできる(§4.5。オーナー決定)。同じシートをフォルダの編集に切り替える。
                 onMakeFolder = (target as? EditTarget.MainSlot)?.let { slot -> { home.switchEdit(EditTarget.Folder(slot.index)) } },
                 onDismiss = { home.finishEdit() },
+                shortcutsOf = home.assignShortcutsOf,
+                onShowShortcuts = { home.assignShortcutsOf = it },
             )
             is EditTarget.Folder -> FolderSheet(
                 target = target,
@@ -101,11 +105,11 @@ internal fun HomeSheets(home: HomeController, topInset: Dp) {
             assignmentList = AssignmentListModel(
                 // 一覧はアプリ名順でアプリごとに 1 行(§8)。バッジは AssignmentSlots.assigned の枠の並びのまま使う。
                 // 既定のアプリ(送話=電話・カメラの枠=カメラ)も「既定」として並べる。件数は自分で割り当てた枠だけ(既定は外せない)。
-                rows = AssignmentSlots.byApp(assignments, catalogDefaults) { labels[it] },
+                rows = AssignmentSlots.byApp(assignments, catalogDefaults, labelOf),
                 count = AssignmentSlots.assigned(assignments).size,
                 confirmClearAll = settings.confirmClearAll,
                 scroll = settings.assignmentScroll,
-                appLabel = { ref -> labels[ref] },
+                appLabel = labelOf,
                 appIcon = { ref -> rememberAppIcon(app.catalog, ref) },
                 onOpen = settings::openAssignments,
                 onBack = settings::back,

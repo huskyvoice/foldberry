@@ -31,6 +31,9 @@
     <string name="main_slot_name">ホームの枠 %d</string>
     <string name="assign_filter_hint">アプリ名で絞り込み</string>
     <string name="assign_clear">割り当て解除</string>
+    <string name="assign_open_app">%1$s を開く</string>
+    <string name="assign_shortcuts">ショートカット</string>
+    <string name="menu_app_section">アプリ</string>
     <string name="assign_no_match">該当するアプリがありません</string>
     <string name="key_assigned">%1$sに %2$s を割り当てました</string>
     <string name="pick_prompt">%s を割り当てるキーを押してください</string>

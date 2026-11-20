@@ -96,7 +96,8 @@ fun MainHomePanel(home: HomeController, bottomInset: Boolean, modifier: Modifier
     val app = context.applicationContext as FoldBerryApp
     val assignments by app.store.state.collectAsState()
     val catalogState by app.catalog.state.collectAsState()
-    val labels = (catalogState as? CatalogState.Loaded)?.apps?.associate { it.ref to it.label }.orEmpty()
+    // ショートカットは「Gmail: 新規作成」(labelOf)。
+    val loaded = catalogState as? CatalogState.Loaded
     val navBottom = if (bottomInset) WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() else 0.dp
     val now by rememberNow()
     val today = now.toLocalDate()
@@ -200,7 +201,7 @@ fun MainHomePanel(home: HomeController, bottomInset: Boolean, modifier: Modifier
                         SlotCell(
                             ref = ref,
                             // 一覧の読込み中・失敗中は名前を出さない(「端末に無いアプリ」と誤って出さないように)。
-                            label = ref?.let { labels[it] ?: if (catalogState is CatalogState.Loaded) resources.getString(R.string.app_missing_label) else null },
+                            label = ref?.let { loaded?.labelOf(it) ?: if (catalogState is CatalogState.Loaded) resources.getString(R.string.app_missing_label) else null },
                             description = resources.getString(R.string.main_slot_name, index + 1),
                             icon = rememberAppIcon(app.catalog, ref),
                             onClick = { onSlotTap(index, ref) },

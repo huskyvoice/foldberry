@@ -101,6 +101,14 @@ class HomeController internal constructor(
      */
     private var returnToList = false
 
+    /**
+     * 割り当てシートで › から開いたアプリ(そのアプリのショートカットのページ。2026-11-20)。null=アプリの一覧。
+     * 戻るで 1 段ずつ戻せるよう、シートの中ではなくここで持つ。消すのはシートを開く・替えるとき(startEdit・switchEdit・
+     * editFromList)。閉じるときに消すと、閉じる動き(AnimatedPanel)の間にアプリの一覧へ戻って見えるため。
+     * 閉じた後に残った値は使われない(back は割り当てシートが開いているときだけ見る)。
+     */
+    var assignShortcutsOf by mutableStateOf<AppEntry?>(null)
+
     /** カバー構成のアプリ一覧の重ね表示(トラックパッド)。 */
     var overlayOpen by mutableStateOf(false)
 
@@ -146,7 +154,8 @@ class HomeController internal constructor(
     fun back() {
         when (panelToClose(openPanels)) {
             Panel.SETTINGS -> settings.back()
-            Panel.ASSIGN -> finishEdit()
+            // ショートカットのページならアプリの一覧へ 1 段戻す。
+            Panel.ASSIGN -> if (assignShortcutsOf != null) assignShortcutsOf = null else finishEdit()
             Panel.APP_MENU -> menuApp = null
             Panel.KEY_PICK -> pickingApp = null
             Panel.APP_OVERLAY -> overlayOpen = false
@@ -214,11 +223,13 @@ class HomeController internal constructor(
         // 設定シートとは同時に出さない(openSettings と対)。メイン縦では上の枠が設定シートの暗幕の外にあり、
         // 開いたまま長押しできる。閉じないと割り当てシートが設定シートの下に隠れる。
         settings.dismiss()
+        assignShortcutsOf = null
         editing = target
     }
 
     /** 開いている割り当てシートを別の対象に替える(自由枠 → フォルダの編集)。一覧から開いていれば閉じたら一覧に戻すまま。 */
     internal fun switchEdit(target: EditTarget) {
+        assignShortcutsOf = null
         editing = target
     }
 
@@ -240,6 +251,7 @@ class HomeController internal constructor(
     internal fun editFromList(target: EditTarget) {
         settings.visible = false
         returnToList = true
+        assignShortcutsOf = null
         editing = target
     }
 
