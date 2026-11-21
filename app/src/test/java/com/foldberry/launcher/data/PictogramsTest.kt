@@ -11,12 +11,17 @@ class PictogramsTest {
         assertEquals(Pictogram.MAIL, Pictograms.of("com.google.android.gm", null, emptyMap()))
         assertEquals(Pictogram.WALLET, Pictograms.of("jp.co.mizuhobank.banking", null, emptyMap()))
         assertEquals(Pictogram.PHONE, Pictograms.of("com.samsung.android.dialer", null, emptyMap()))
+        // SNS(2026-11-21)。Instagram は写真と申告していても SNS、LINE はメッセージのまま
+        assertEquals(Pictogram.SNS, Pictograms.of("com.twitter.android", null, emptyMap()))
+        assertEquals(Pictogram.SNS, Pictograms.of("com.instagram.android", Pictograms.CATEGORY_IMAGE, emptyMap()))
+        assertEquals(Pictogram.CHAT, Pictograms.of("jp.naver.line.android", null, emptyMap()))
     }
 
     @Test
     fun 対応表に無ければアプリが申告する種類で決め_それも無ければ汎用() {
         assertEquals(Pictogram.MUSIC, Pictograms.of("x.unknown", Pictograms.CATEGORY_AUDIO, emptyMap()))
         assertEquals(Pictogram.MAP, Pictograms.of("x.unknown", Pictograms.CATEGORY_MAPS, emptyMap()))
+        assertEquals(Pictogram.SNS, Pictograms.of("x.unknown", Pictograms.CATEGORY_SOCIAL, emptyMap()))
         // ゲーム(0)など当てはまらない種類・読めない(null)は汎用
         assertEquals(Pictogram.GENERIC, Pictograms.of("x.unknown", 0, emptyMap()))
         assertEquals(Pictogram.GENERIC, Pictograms.of("x.unknown", null, emptyMap()))

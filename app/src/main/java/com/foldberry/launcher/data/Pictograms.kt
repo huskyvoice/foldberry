@@ -8,6 +8,7 @@ package com.foldberry.launcher.data
 enum class Pictogram(val id: String) {
     MAIL("mail"),
     CHAT("chat"),
+    SNS("sns"),
     BROWSER("browser"),
     MAP("map"),
     PHOTO("photo"),
@@ -42,11 +43,12 @@ object Pictograms {
     const val CATEGORY_AUDIO = 1
     const val CATEGORY_VIDEO = 2
     const val CATEGORY_IMAGE = 3
+    const val CATEGORY_SOCIAL = 4
     const val CATEGORY_MAPS = 6
 
     /**
      * パッケージ名の対応表。実機の調査(2026-11-20。tmp/icon-survey.tsv の 79 アプリ)と、よく使われるアプリから作った。
-     * どれにも当たらないアプリ(SNS・ニュース・健康など)は書かない(=申告の種類か GENERIC)。
+     * どれにも当たらないアプリ(ニュース・健康など)は書かない(=申告の種類か GENERIC)。
      */
     private val BY_PACKAGE: Map<String, Pictogram> = buildMap {
         fun put(p: Pictogram, vararg packages: String) = packages.forEach { put(it, p) }
@@ -62,7 +64,15 @@ object Pictograms {
             "org.mozilla.firefox", "com.microsoft.emmx",
         )
         put(Pictogram.MAP, "com.google.android.apps.maps", "com.samsung.android.app.find", "jp.co.nttdocomo.imadocosearch_sha2")
-        put(Pictogram.PHOTO, "com.google.android.apps.photos", "com.sec.android.gallery3d", "com.instagram.android")
+        // SNS(2026-11-21 追加)。LINE・Discord・Slack など 1 対 1 のやり取りが主のものは CHAT のまま。
+        // Instagram は写真から移した(オーナー決定)。
+        put(
+            Pictogram.SNS,
+            "com.twitter.android", "com.facebook.katana", "com.instagram.android", "com.instagram.barcelona",
+            "com.zhiliaoapp.musically", "com.ss.android.ugc.trill", "xyz.blueskyweb.app", "org.joinmastodon.android",
+            "com.reddit.frontpage", "com.linkedin.android", "com.pinterest", "com.snapchat.android",
+        )
+        put(Pictogram.PHOTO, "com.google.android.apps.photos", "com.sec.android.gallery3d")
         put(Pictogram.CAMERA, "com.sec.android.app.camera", "com.google.android.GoogleCamera", "com.google.ar.lens")
         put(
             Pictogram.PHONE,
@@ -94,11 +104,12 @@ object Pictograms {
         )
     }
 
-    /** アプリが manifest で申告する種類(ApplicationInfo.category)からの絵記号。ゲーム・SNS などは当てはまらないので null。 */
+    /** アプリが manifest で申告する種類(ApplicationInfo.category)からの絵記号。ゲームなどは当てはまらないので null。 */
     private fun byCategory(category: Int?): Pictogram? = when (category) {
         CATEGORY_AUDIO -> Pictogram.MUSIC
         CATEGORY_VIDEO -> Pictogram.VIDEO
         CATEGORY_IMAGE -> Pictogram.PHOTO
+        CATEGORY_SOCIAL -> Pictogram.SNS
         CATEGORY_MAPS -> Pictogram.MAP
         else -> null
     }

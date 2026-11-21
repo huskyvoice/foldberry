@@ -73,7 +73,7 @@
     <string name="date_style_year">年付き</string>
     <string name="date_style_numeric">数字</string>
     <string name="icon_style_title">割り当てアイコンの表示</string>
-    <string name="icon_style_desc">キー・自由枠・カメラの枠に出すアイコン</string>
+    <string name="icon_style_desc">キー・自由枠・カメラの枠・音楽の操作に出すアイコン</string>
     <string name="icon_style_color">標準</string>
     <string name="icon_style_gray">白黒</string>
     <string name="icon_style_pictogram">絵記号</string>
@@ -89,6 +89,7 @@
     </plurals>
     <string name="pictogram_mail">メール</string>
     <string name="pictogram_chat">メッセージ</string>
+    <string name="pictogram_sns">SNS</string>
     <string name="pictogram_browser">ブラウザ</string>
     <string name="pictogram_map">地図</string>
     <string name="pictogram_photo">写真</string>

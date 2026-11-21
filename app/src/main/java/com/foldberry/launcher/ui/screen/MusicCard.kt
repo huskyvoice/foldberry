@@ -49,14 +49,17 @@ import com.foldberry.launcher.R
 import com.foldberry.launcher.data.AppEntry
 import com.foldberry.launcher.data.CatalogState
 import com.foldberry.launcher.data.NotificationCounter
+import com.foldberry.launcher.data.IconStyle
 import com.foldberry.launcher.ui.LineIcon
+import com.foldberry.launcher.ui.LocalAssignedIconFilter
+import com.foldberry.launcher.ui.LocalAssignedIconLook
 import com.foldberry.launcher.ui.MediaInfo
 import com.foldberry.launcher.ui.SheetAccent
 import com.foldberry.launcher.ui.SheetFieldColor
 import com.foldberry.launcher.ui.icons.FoldBerryIcons
 import com.foldberry.launcher.ui.openNotificationAccessSettings
 import com.foldberry.launcher.ui.playLastMedia
-import com.foldberry.launcher.ui.rememberAppIcon
+import com.foldberry.launcher.ui.rememberAssignedIcon
 import com.foldberry.launcher.ui.rememberMediaInfo
 import kotlinx.coroutines.delay
 
@@ -187,23 +190,34 @@ private fun MusicLayout(
     }
 }
 
-/** アート。無ければアプリのアイコン、それも無ければ音符。 */
+/**
+ * アート。無ければアプリのアイコン、それも無ければ音符。
+ * アプリのアイコンは割り当てアイコンの出し方(標準/白黒/絵記号)に従う(2026-11-21 オーナー指定。§5.2)。アートはそのまま。
+ */
 @Composable
 private fun Artwork(art: ImageBitmap?, appEntry: AppEntry?, size: Dp) {
     val app = LocalContext.current.applicationContext as FoldBerryApp
     val shape = RoundedCornerShape(if (size > 50.dp) 8.dp else 6.dp)
+    // 絵記号の絵は周りに余白を持って描かれている(AppIcon.kt の PICTOGRAM_INSET)ので、アプリのアイコン用の余白は足さない。
+    val pictogram = LocalAssignedIconLook.current.style == IconStyle.PICTOGRAM
+    val filter = LocalAssignedIconFilter.current
     Box(Modifier.size(size).clip(shape).background(SheetFieldColor, shape), contentAlignment = Alignment.Center) {
-        val icon = rememberAppIcon(app.catalog, appEntry?.ref)
+        val icon = rememberAssignedIcon(app.catalog, appEntry?.ref)
         when {
             art != null -> Image(art, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            icon != null -> Image(icon, contentDescription = null, modifier = Modifier.fillMaxSize().padding(size / 8))
+            icon != null -> Image(
+                icon, contentDescription = null, colorFilter = filter,
+                modifier = Modifier.fillMaxSize().then(if (pictogram) Modifier else Modifier.padding(size / 8)),
+            )
             else -> LineIcon(FoldBerryIcons.Line.Music, Color(0x99FFFFFF), size / 2)
         }
         // アートがあるときは右下にアプリのアイコンを小さく重ねる(どのアプリで鳴っているか)。
+        // 絵記号は白い線なので、明るいアートの上でも見えるよう暗い丸を敷く。
         if (art != null && icon != null) {
             Image(
-                icon, contentDescription = null,
-                modifier = Modifier.align(Alignment.BottomEnd).padding(2.dp).size(size / 3.2f),
+                icon, contentDescription = null, colorFilter = filter,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(2.dp).size(size / 3.2f)
+                    .then(if (pictogram) Modifier.background(Color(0xB3000000), CircleShape) else Modifier),
             )
         }
     }

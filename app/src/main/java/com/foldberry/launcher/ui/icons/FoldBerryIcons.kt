@@ -322,6 +322,10 @@ object FoldBerryIcons {
 
         private val Mail = pict("mail", rect(3f, 5.5f, 18f, 13f, 2f), "M3.5 7l8.5 6.5L20.5 7")
         private val Chat = pict("chat", "M4 6.5Q4 4.5 6 4.5h12q2 0 2 2v8q0 2-2 2h-7l-4.5 3.5v-3.5H6q-2 0-2-2z")
+        /** SNS: 人が 2 人(docs/mock/sns-mock.html の A。2026-11-21)。 */
+        private val Sns = pict(
+            "sns", circle(9f, 8.5f, 3f), "M3.5 19.5q0-5.5 5.5-5.5t5.5 5.5", "M14.5 5.6a2.6 2.6 0 1 1 1.5 4.9", "M17 13.6q3.5.6 3.5 5",
+        )
         private val Browser = pict("browser", circle(12f, 12f, 8.5f), "M3.5 12h17", "M12 3.5q-4 4-4 8.5t4 8.5q4-4 4-8.5t-4-8.5")
         private val Map = pict("map", "M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z", circle(12f, 10f, 2.3f))
         private val Photo = pict("photo", rect(3.5f, 5f, 17f, 14f, 2f), "M4 17l5-5 3.5 3.5 2.5-2.5 4.5 4.5", circle(15.5f, 9f, 1.5f))
@@ -353,6 +357,7 @@ object FoldBerryIcons {
         fun of(p: Pictogram): ImageVector = when (p) {
             Pictogram.MAIL -> Mail
             Pictogram.CHAT -> Chat
+            Pictogram.SNS -> Sns
             Pictogram.BROWSER -> Browser
             Pictogram.MAP -> Map
             Pictogram.PHOTO -> Photo

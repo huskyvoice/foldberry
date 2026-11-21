@@ -117,6 +117,7 @@ internal fun IconStyle.labelRes(): Int = when (this) {
 internal fun Pictogram.labelRes(): Int = when (this) {
     Pictogram.MAIL -> R.string.pictogram_mail
     Pictogram.CHAT -> R.string.pictogram_chat
+    Pictogram.SNS -> R.string.pictogram_sns
     Pictogram.BROWSER -> R.string.pictogram_browser
     Pictogram.MAP -> R.string.pictogram_map
     Pictogram.PHOTO -> R.string.pictogram_photo

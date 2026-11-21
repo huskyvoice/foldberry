@@ -60,7 +60,8 @@ fun assignedIconLocals(appearance: AppearanceSetting): Array<ProvidedValue<*>> =
 )
 
 /**
- * 割り当て済みの枠(キーの副刻印・自由枠・フォルダ・カメラの枠)に出すアイコン。Hub の行は対象外(2026-11-20 オーナー決定)(§5.2)。
+ * 割り当て済みの枠(キーの副刻印・自由枠・フォルダ・カメラの枠)と音楽の操作(MusicCard。2026-11-21)に出すアイコン。
+ * Hub の行は対象外(2026-11-20 オーナー決定)(§5.2)。
  * 絵記号の設定ならアプリのアイコンの代わりに絵記号を ImageBitmap に描いて返す(描く側は今までどおり Image で出せる)。
  */
 @Composable

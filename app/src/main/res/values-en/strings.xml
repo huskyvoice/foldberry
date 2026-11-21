@@ -66,7 +66,7 @@
     <string name="date_style_year">With year</string>
     <string name="date_style_numeric">Numeric</string>
     <string name="icon_style_title">Assigned icons</string>
-    <string name="icon_style_desc">Icons on keys, slots and the camera button</string>
+    <string name="icon_style_desc">Icons on keys, slots, the camera button and music controls</string>
     <string name="icon_style_color">Standard</string>
     <string name="icon_style_gray">Gray</string>
     <string name="icon_style_pictogram">Pictograms</string>
@@ -82,6 +82,7 @@
     </plurals>
     <string name="pictogram_mail">Mail</string>
     <string name="pictogram_chat">Messages</string>
+    <string name="pictogram_sns">Social</string>
     <string name="pictogram_browser">Browser</string>
     <string name="pictogram_map">Map</string>
     <string name="pictogram_photo">Photos</string>
