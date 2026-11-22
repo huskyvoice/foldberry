@@ -7,7 +7,7 @@ import com.foldberry.launcher.data.DefaultApps
 /**
  * アプリ一覧のアイコン右上に出す割り当てバッジの文字(§6。比較モックの案 E。2026-11-17 オーナー決定)。
  * キーは刻印に近い短い文字、自由枠は「M1」〜。記号(⌫ ⇧ ☎ など)は端末のフォントに無い(豆腐になる)おそれがあるので、記号・修飾・機能列のキーは英字の略記にする。複数に割り当てていれば先頭 1 つに「+」を付ける。
- * 先頭は キー(キーボードの並び順)→ 機能列(送話・戻る・終話)→ カバーのカメラの枠(CAM)→ メインの自由枠(M1〜M8)の順
+ * 先頭は キー(キーボードの並び順)→ Shift 面の英字 → 機能列(送話・戻る・終話)→ カバーのカメラの枠(CAM)→ メインの自由枠(M1〜M8)の順
  * (AssignmentSlots と同じ並び)で選ぶ。純粋関数(単体テスト対象)。
  */
 object AssignmentBadge {
@@ -33,7 +33,8 @@ object AssignmentBadge {
 
     /** 枠の短い表記(バッジの文字)。 */
     fun label(slot: AssignmentSlot): String = when (slot) {
-        is AssignmentSlot.Key -> shortLabel(slot.spec.id)
+        // Shift 面は「^+英字」。画面では Shift の印+英字で描く(shiftLetter。D28)。
+        is AssignmentSlot.Key -> if (slot.shifted) "$SHIFT_PREFIX${slot.spec.id}" else shortLabel(slot.spec.id)
         is AssignmentSlot.Function -> functionLabel(slot.key)
         is AssignmentSlot.DockCamera -> "CAM"
         // フォルダの中は「F+枠の番号」。画面ではフォルダの印+番号で描く(folderNumber。2026-11-18 オーナー決定)。
@@ -50,13 +51,20 @@ object AssignmentBadge {
      */
     fun folderNumber(label: String): String? = FOLDER_LABEL.matchEntire(label)?.groupValues?.get(1)
 
+    /** Shift 面の表記の頭。記号の ⇧ は端末のフォントに無いおそれがあるので、内部では ^ にして画面側で印を描く。 */
+    const val SHIFT_PREFIX = "^"
+    private val SHIFT_LABEL = Regex("^\\^([A-Z].*)$")
+
+    /** Shift 面の表記(「^Q」「^Q+」)なら、印の後ろに出す文字(「Q」「Q+」)を返す。それ以外は null。 */
+    fun shiftLetter(label: String): String? = SHIFT_LABEL.matchEntire(label)?.groupValues?.get(1)
+
     /** 文字キーは id そのもの(W など)。記号・修飾キーは英字の短い略記。 */
     fun shortLabel(id: String): String = when (id) {
         "BACKSPACE" -> "BS"
         "ENTER" -> "ENT"
         "ALT" -> "alt"
         "DOLLAR" -> "$"
-        "LEFT_SHIFT", "RIGHT_SHIFT" -> "SFT"
+        "RIGHT_SHIFT" -> "SFT"
         "ZERO" -> "0"
         "SPACE" -> "SPC"
         "SYM" -> "sym"

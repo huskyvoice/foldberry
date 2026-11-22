@@ -460,7 +460,13 @@ private fun SlotKeycap(slot: AssignmentSlot, selected: Boolean, onClick: () -> U
             Image(FoldBerryIcons.FolderMark, contentDescription = null, modifier = Modifier.size(11.dp), colorFilter = ColorFilter.tint(fg))
             Spacer(Modifier.width(2.dp))
         }
-        BasicText(folderNumber ?: label, style = TextStyle(color = fg, fontSize = 12.sp, fontWeight = FontWeight.Bold))
+        // Shift 面は Shift の印+英字(D28)。
+        val shiftLetter = AssignmentBadge.shiftLetter(label)
+        if (shiftLetter != null) {
+            Image(FoldBerryIcons.ShiftMark, contentDescription = null, modifier = Modifier.size(11.dp), colorFilter = ColorFilter.tint(fg))
+            Spacer(Modifier.width(2.dp))
+        }
+        BasicText(folderNumber ?: shiftLetter ?: label, style = TextStyle(color = fg, fontSize = 12.sp, fontWeight = FontWeight.Bold))
         val hint = resources.slotHint(slot)
         (if (slot.isDefault) listOfNotNull(hint, resources.getString(R.string.slot_default)).joinToString("・") else hint)?.let { hint ->
             Spacer(Modifier.width(6.dp))

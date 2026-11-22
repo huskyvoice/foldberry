@@ -41,10 +41,12 @@ internal sealed interface EditTarget {
         override fun title(resources: Resources) = resources.getString(R.string.folder_edit_title, index + 1)
     }
 
-    data class Key(val spec: KeySpec) : App {
-        override fun title(resources: Resources) = resources.getString(R.string.assign_key_title, resources.keyName(spec))
-        override fun current(a: Assignments) = a.keys[spec.id]
-        override fun assign(a: Assignments, app: AppRef?) = a.withKey(spec.id, app)
+    /** @param shifted Shift 面(2 面目。英字キーだけ。D28) */
+    data class Key(val spec: KeySpec, val shifted: Boolean = false) : App {
+        private val id get() = if (shifted) KeyLayout.shiftId(spec) else spec.id
+        override fun title(resources: Resources) = resources.getString(R.string.assign_key_title, resources.keyName(spec, shifted))
+        override fun current(a: Assignments) = a.keys[id]
+        override fun assign(a: Assignments, app: AppRef?) = a.withKey(id, app)
     }
 
     /** 機能列の送話・戻る・終話(§5.3)。assignId のあるキーだけを渡す。 */
@@ -73,7 +75,7 @@ internal sealed interface EditTarget {
 
 /** 割り当て一覧の枠から、割り当てシートの対象を作る(「変更」。§8)。フォルダの中のアプリはそのフォルダの編集シート。 */
 internal fun AssignmentSlot.editTarget(): EditTarget = when (this) {
-    is AssignmentSlot.Key -> EditTarget.Key(spec)
+    is AssignmentSlot.Key -> EditTarget.Key(spec, shifted)
     is AssignmentSlot.Function -> EditTarget.Function(key)
     is AssignmentSlot.DockCamera -> EditTarget.DockCamera
     is AssignmentSlot.MainSlot -> if (inFolder) EditTarget.Folder(index) else EditTarget.MainSlot(index)
@@ -135,6 +137,12 @@ class HomeController internal constructor(
 
     /** 「キーに割り当て」でキーが押されるのを待っているアプリ。 */
     var pickingApp by mutableStateOf<AppEntry?>(null)
+
+    /**
+     * Shift 面(2 面目)を出しているか(D28)。左 Shift のタップでだけ切り替える(英字を押しても・戻る・終話でも 1 面目に戻さない。
+     * 2026-11-22 オーナー指定)。パネルではないので「戻る」の順(home/Panel)には入れない。
+     */
+    var shiftOn by mutableStateOf(false)
 
     /** いまカバー構成か(トラックパッドの動作が変わる)。HomeScreen が構成を決めるたびに入れる。 */
     var isCover by mutableStateOf(true)

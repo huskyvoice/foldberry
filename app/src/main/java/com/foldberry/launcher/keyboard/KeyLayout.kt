@@ -78,8 +78,25 @@ object KeyLayout {
         ),
     )
 
-    /** 自由割り当て対象の全キー(§5.1: 35 キー)。 */
-    val assignableKeys: List<KeySpec> = rows.flatten()
+    /** 描画するすべてのキー(§5.1: 35 キー)。 */
+    val allKeys: List<KeySpec> = rows.flatten()
+
+    /**
+     * 左 Shift: タップで Shift 面(2 面目)に切り替えるキー(§5.2.1。D28。2026-11-22 オーナー決定)。割り当てはできない。
+     * 以前の左 Shift の割り当て(保存キー `LEFT_SHIFT`)は読込みで捨てる(data/Assignments の RETIRED_KEYS)。
+     */
+    const val SHIFT_KEY_ID = "LEFT_SHIFT"
+
+    /** 自由割り当て対象の全キー(§5.1: 左 Shift を除く 34 キー)。 */
+    val assignableKeys: List<KeySpec> = allKeys.filter { it.id != SHIFT_KEY_ID }
+
+    /** Shift 面を持つキー=英字 26 個(キーボードの並び順)。それ以外は Shift 面の間は押せない(D28)。 */
+    val shiftableKeys: List<KeySpec> = allKeys.filter { isShiftable(it) }
+
+    fun isShiftable(spec: KeySpec): Boolean = spec.id.length == 1 && spec.id[0] in 'A'..'Z'
+
+    /** Shift 面の保存キー(例 `SHIFT_Q`。Assignments.keys のキー。変えると保存済みの割り当てが外れる)。 */
+    fun shiftId(spec: KeySpec): String = "SHIFT_${spec.id}"
 
     val functionKeys: List<FunctionKey> = FunctionKey.entries
 

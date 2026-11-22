@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.foldberry.launcher.keyboard.KeyLayout
@@ -33,9 +34,14 @@ fun Fret(height: Dp) {
     Box(Modifier.fillMaxWidth().height(height).background(FretBrush, alpha = 0.8f))
 }
 
+/** Shift 面の間に押せないキー(英字以外)の濃さ(D28。docs/mock/shift-mock.html。2026-11-22 オーナー決定)。 */
+internal const val SHIFT_DIMMED_ALPHA = 0.2f
+
 /**
  * 機能列の下のフレットから 4 段目までの、自由割り当てキーの部分。
  * @param iconFor キーに割り当てたアプリのアイコン(未割り当て・読込み前は null)
+ * @param highlightKey 刻印と縁を青くするキー(Shift 面の間の左 Shift。D28)
+ * @param dimmed 薄くして押せなくするキー(Shift 面の間の英字以外。D28)
  */
 @Composable
 fun KeyRows(
@@ -44,11 +50,13 @@ fun KeyRows(
     iconFor: @Composable (KeySpec) -> ImageBitmap? = { null },
     onTap: (KeySpec) -> Unit = {},
     onLongPress: (KeySpec) -> Unit = {},
+    highlightKey: String? = null,
+    dimmed: (KeySpec) -> Boolean = { false },
 ) {
     Column(Modifier.fillMaxWidth()) {
         KeyLayout.rows.forEach { row ->
             Fret(fretHeight)
-            KeyRow(row, keyRowHeight, iconFor, onTap, onLongPress)
+            KeyRow(row, keyRowHeight, iconFor, onTap, onLongPress, highlightKey, dimmed)
         }
     }
 }
@@ -61,20 +69,26 @@ private fun KeyRow(
     iconFor: @Composable (KeySpec) -> ImageBitmap?,
     onTap: (KeySpec) -> Unit,
     onLongPress: (KeySpec) -> Unit,
+    highlightKey: String?,
+    dimmed: (KeySpec) -> Boolean,
 ) {
     BoxWithConstraints(Modifier.fillMaxWidth().height(height).padding(horizontal = SidePadding, vertical = RowPaddingV)) {
         val colWidth = (maxWidth - KeyGap * (KeyLayout.COLUMNS - 1)) / KeyLayout.COLUMNS
         val keyHeight = maxHeight
         row.forEach { spec ->
+            val off = dimmed(spec)
             KeyCap(
                 spec,
                 rowHeight = height,
                 modifier = Modifier
                     .offset(x = (colWidth + KeyGap) * (spec.column - 1))
-                    .size(width = colWidth * spec.span + KeyGap * (spec.span - 1), height = keyHeight),
+                    .size(width = colWidth * spec.span + KeyGap * (spec.span - 1), height = keyHeight)
+                    .graphicsLayer { alpha = if (off) SHIFT_DIMMED_ALPHA else 1f },
                 assignedIcon = iconFor(spec),
                 onTap = { onTap(spec) },
                 onLongPress = { onLongPress(spec) },
+                highlight = spec.id == highlightKey,
+                enabled = !off,
             )
         }
     }

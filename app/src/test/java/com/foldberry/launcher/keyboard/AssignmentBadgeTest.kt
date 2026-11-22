@@ -32,7 +32,7 @@ class AssignmentBadgeTest {
 
     @Test
     fun 記号キーと機能列は短い表記() {
-        assertEquals("SFT", AssignmentBadge.of(Assignments.EMPTY.withKey("LEFT_SHIFT", gmail), gmail))
+        assertEquals("SFT", AssignmentBadge.of(Assignments.EMPTY.withKey("RIGHT_SHIFT", gmail), gmail))
         assertEquals("TEL", AssignmentBadge.of(Assignments.EMPTY.withKey("FN_SEND", gmail), gmail))
     }
 
@@ -75,6 +75,39 @@ class AssignmentBadgeTest {
     @Test
     fun 全ての割り当て可能キーに空でない短い表記がある() {
         KeyLayout.assignableKeys.forEach { assert(AssignmentBadge.shortLabel(it.id).isNotEmpty()) { it.id } }
+    }
+
+    @Test
+    fun Shift面はキャレット付きの英字で1面目の英字の後_機能列の前() {
+        val q = KeyLayout.allKeys.first { it.id == "Q" }
+        val p = KeyLayout.allKeys.first { it.id == "P" }
+        val shiftQ = Assignments.EMPTY.withKey(KeyLayout.shiftId(q), gmail)
+        assertEquals("^Q", AssignmentBadge.of(shiftQ, gmail))
+        // 1 面目のキー(P は並びで Q より後)が先、Shift 面が後、機能列はさらに後。
+        assertEquals("P+", AssignmentBadge.of(shiftQ.withKey(p.id, gmail), gmail))
+        assertEquals("^Q+", AssignmentBadge.of(shiftQ.withKey("FN_SEND", gmail), gmail))
+        assertEquals(listOf("^Q", "TEL"), AssignmentBadge.all(shiftQ.withKey("FN_SEND", gmail), gmail))
+    }
+
+    @Test
+    fun Shift面の表記だけから英字を取り出す() {
+        assertEquals("Q", AssignmentBadge.shiftLetter("^Q"))
+        assertEquals("Q+", AssignmentBadge.shiftLetter("^Q+"))
+        listOf("Q", "Q+", "M1", "F1", "SFT", "SPC", "sym", "$", "TEL", "CAM", "^", "^1").forEach {
+            assertNull(it, AssignmentBadge.shiftLetter(it))
+        }
+        assertNull(AssignmentBadge.folderNumber("^Q"))
+    }
+
+    @Test
+    fun Shift面の割り当ては保存と読込みと突き合わせで残る() {
+        val id = KeyLayout.shiftId(KeyLayout.allKeys.first { it.id == "G" })
+        val a = Assignments.EMPTY.withKey(id, maps)
+        val decoded = com.foldberry.launcher.data.AssignmentsCodec.decode(com.foldberry.launcher.data.AssignmentsCodec.encode(a))
+        assertEquals(maps, (decoded as com.foldberry.launcher.data.AssignmentsCodec.Decoded.Ok).value.keys[id])
+        assertEquals(maps, com.foldberry.launcher.data.reconcile(a, listOf(gmail, maps))!!.assignments.keys[id])
+        // アンインストールされていれば外れる。
+        assertNull(com.foldberry.launcher.data.reconcile(a, listOf(gmail))!!.assignments.keys[id])
     }
 
     @Test

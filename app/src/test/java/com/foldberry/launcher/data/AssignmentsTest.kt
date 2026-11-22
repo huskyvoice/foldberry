@@ -60,6 +60,17 @@ class AssignmentsTest {
     }
 
     @Test
+    fun 左Shiftの割り当ては読込みで捨て_Shift面の割り当ては残す() {
+        // 2026-11-22 に左 Shift を Shift 面の切替専用にした(D28)。
+        val text = """{"version":1,"keys":{"LEFT_SHIFT":{"package":"p","activity":"a"},""" +
+            """"SHIFT_Q":{"package":"q","activity":"b"},"RIGHT_SHIFT":{"package":"r","activity":"c"}}}"""
+        assertTrue(AssignmentsCodec.hasRetiredEntries(text))
+        val decoded = AssignmentsCodec.decode(text) as AssignmentsCodec.Decoded.Ok
+        assertEquals(mapOf("SHIFT_Q" to AppRef("q", "b"), "RIGHT_SHIFT" to AppRef("r", "c")), decoded.value.keys)
+        assertFalse(AssignmentsCodec.hasRetiredEntries(AssignmentsCodec.encode(decoded.value)))
+    }
+
+    @Test
     fun 廃止した自由枠M9からM12は読込みで捨てる() {
         val text = """{"version":1,"keys":{"MAIN_SLOT_8":{"package":"p","activity":"a"},""" +
             """"MAIN_SLOT_9":{"package":"q","activity":"b"},"MAIN_SLOT_12":{"package":"r","activity":"c"}}}"""

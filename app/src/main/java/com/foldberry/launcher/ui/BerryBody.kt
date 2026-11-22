@@ -226,13 +226,40 @@ fun BerryBody(
                         }
                     },
                 )
+                // Shift 面(D28): 左 Shift のタップで切り替え。2 面目の間は英字だけが押せ、もう一度左 Shift を押すまで 2 面目のまま。
+                val shiftOn = home.shiftOn
                 KeyRows(
                     keyRowHeight = keyRowHeight.dp,
                     fretHeight = b.fret.dp,
-                    iconFor = { spec -> rememberAssignedIcon(app.catalog, assignments.keys[spec.id]) },
-                    onTap = { spec -> if (picking != null) assignPicked(spec.id, resources.keyName(spec), picking) else launch(assignments.keys[spec.id]) },
-                    // 長押し: 割り当て編集(§7)。選択待ちの間はタップと同じく、そのキーに割り当てる。
-                    onLongPress = { spec -> if (picking != null) assignPicked(spec.id, resources.keyName(spec), picking) else home.startEdit(EditTarget.Key(spec)) },
+                    iconFor = { spec ->
+                        val id = if (shiftOn && KeyLayout.isShiftable(spec)) KeyLayout.shiftId(spec) else spec.id
+                        rememberAssignedIcon(app.catalog, assignments.keys[id])
+                    },
+                    onTap = { spec ->
+                        when {
+                            spec.id == KeyLayout.SHIFT_KEY_ID -> home.shiftOn = !home.shiftOn
+                            home.shiftOn -> if (KeyLayout.isShiftable(spec)) {
+                                val id = KeyLayout.shiftId(spec)
+                                if (picking != null) assignPicked(id, resources.keyName(spec, shifted = true), picking) else launch(assignments.keys[id])
+                            }
+                            picking != null -> assignPicked(spec.id, resources.keyName(spec), picking)
+                            else -> launch(assignments.keys[spec.id])
+                        }
+                    },
+                    // 長押し: 割り当て編集(§7)。選択待ちの間はタップと同じく、そのキーに割り当てる。左 Shift は割り当てできないので何もしない。
+                    onLongPress = { spec ->
+                        when {
+                            spec.id == KeyLayout.SHIFT_KEY_ID -> Unit
+                            home.shiftOn -> if (KeyLayout.isShiftable(spec)) {
+                                if (picking != null) assignPicked(KeyLayout.shiftId(spec), resources.keyName(spec, shifted = true), picking)
+                                else home.startEdit(EditTarget.Key(spec, shifted = true))
+                            }
+                            picking != null -> assignPicked(spec.id, resources.keyName(spec), picking)
+                            else -> home.startEdit(EditTarget.Key(spec))
+                        }
+                    },
+                    highlightKey = if (shiftOn) KeyLayout.SHIFT_KEY_ID else null,
+                    dimmed = { shiftOn && !KeyLayout.isShiftable(it) && it.id != KeyLayout.SHIFT_KEY_ID },
                 )
                 Spacer(Modifier.height(b.bottomMargin.dp))
             }

@@ -37,6 +37,7 @@
     <string name="height_short">Not enough height: need %1$sdp / have %2$sdp</string>
 
     <string name="key_name">%s key</string>
+    <string name="key_shift_name">Shift+%s key</string>
     <string name="key_backspace">Backspace key</string>
     <string name="key_alt">alt key</string>
     <string name="key_dollar">$ key</string>

@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
@@ -30,6 +31,7 @@ import com.foldberry.launcher.keyboard.KeyLayout
 import com.foldberry.launcher.keyboard.KeySpec
 import com.foldberry.launcher.keyboard.Legend
 import com.foldberry.launcher.ui.LocalAssignedIconFilter
+import com.foldberry.launcher.ui.SheetAccent
 import com.foldberry.launcher.ui.icons.FoldBerryIcons
 import kotlin.math.tan
 
@@ -53,6 +55,8 @@ private const val ASSIGNED_ICON_RATIO = 0.3f
 
 /**
  * @param assignedIcon 割り当て済みアプリのアイコン。null なら未割り当て(実機の副刻印を薄く出す)。D13
+ * @param highlight 主刻印と縁をアクセントの青にする(Shift 面の間の左 Shift。D28。docs/mock/shift-mock.html の案 B)
+ * @param enabled false なら押下の演出・触覚・タップをすべて出さない(Shift 面の間の英字以外。D28)
  */
 @Composable
 fun KeyCap(
@@ -62,6 +66,8 @@ fun KeyCap(
     assignedIcon: ImageBitmap? = null,
     onTap: (() -> Unit)? = null,
     onLongPress: (() -> Unit)? = null,
+    highlight: Boolean = false,
+    enabled: Boolean = true,
 ) {
     val pressed = rememberPressState()
     val tilt = KeyLayout.tiltOf(spec)
@@ -69,7 +75,7 @@ fun KeyCap(
     Box(
         modifier
             // 押下判定は縮小・沈みを掛ける前の座標で行う(後ろに置くと、押下で縮んだ分だけ縁の指が「外」になり点滅する)。
-            .pressFeedback(pressed, spec.id, onTap = onTap, onLongPress = onLongPress)
+            .then(if (enabled) Modifier.pressFeedback(pressed, spec.id, onTap = onTap, onLongPress = onLongPress) else Modifier)
             .graphicsLayer {
                 // 押下: わずかに縮んで 1dp 沈む。
                 val s = if (pressed.value) 0.965f else 1f
@@ -103,7 +109,7 @@ fun KeyCap(
                 )
                 val hlCenter = Offset(w * (0.5f + tilt * 0.22f), h * 0.18f)
                 val hlRadius = w * 0.7f
-                val highlight = Brush.radialGradient(
+                val gloss = Brush.radialGradient(
                     listOf(Color.White.copy(alpha = GLOSS), Color.Transparent),
                     center = hlCenter, radius = hlRadius,
                 )
@@ -118,7 +124,7 @@ fun KeyCap(
                     drawPath(face, base)
                     clipPath(face) {
                         // ハイライトは横長の楕円(モックの 70% × 45%)。
-                        scale(1f, 0.45f / 0.7f, pivot = hlCenter) { drawCircle(highlight, hlRadius, hlCenter) }
+                        scale(1f, 0.45f / 0.7f, pivot = hlCenter) { drawCircle(gloss, hlRadius, hlCenter) }
                         drawRect(innerShade)
                         drawLine(
                             Color.White.copy(alpha = if (isPressed) EDGE / 2 else EDGE),
@@ -126,6 +132,8 @@ fun KeyCap(
                         )
                         if (isPressed) drawRect(Color.Black.copy(alpha = 0.12f))
                     }
+                    // Shift 面の左 Shift: 縁を青く。
+                    if (highlight) drawPath(face, SheetAccent, style = Stroke(width = 1.5.dp.toPx()))
                 }
             },
     ) {
@@ -152,7 +160,7 @@ fun KeyCap(
         Box(Modifier.align(Alignment.BottomCenter).padding(bottom = rowHeight * 0.12f)) {
             val isWord = (spec.main as? Legend.Text)?.text?.let { it.length > 1 } == true
             val size = if (isWord) mainSize * 0.78f else mainSize
-            Legend(spec.main, color = MainLegend, size = rowHeight * MAIN_RATIO * 1.1f, fontSize = size, weight = FontWeight.Medium)
+            Legend(spec.main, color = if (highlight) SheetAccent else MainLegend, size = rowHeight * MAIN_RATIO * 1.1f, fontSize = size, weight = FontWeight.Medium)
         }
     }
 }

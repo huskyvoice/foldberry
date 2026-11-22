@@ -23,6 +23,7 @@ captures/
 Thumbs.db
 desktop.ini
 .DS_Store
+*.code-workspace
 
 # Playwright MCP の作業ログ(UI 検証時に自動生成)
 .playwright-mcp/

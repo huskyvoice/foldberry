@@ -14,15 +14,18 @@ The physical-style QWERTY keyboard drawn on screen is not for typing — each ke
 </p>
 <p align="center">Left: cover screen / Right: main screen (portrait)</p>
 <p align="center">
-  <img src="screenshots/shot-main.png" alt="Main screen (landscape, calendar)" height="300">
+  <img src="screenshots/shot-main.png" alt="Main screen (landscape, calendar)" height="200">
   &nbsp;
-  <img src="screenshots/shot-main-hub.png" alt="Main screen (landscape, Hub)" height="300">
+  <img src="screenshots/shot-main-pictogram.png" alt="Main screen (landscape, calendar, pictograms)" height="200">
+  &nbsp;
+  <img src="screenshots/shot-main-hub.png" alt="Main screen (landscape, Hub)" height="200">
 </p>
-<p align="center">Main screen (landscape) Left: calendar / Right: Hub</p>
+<p align="center">Main screen (landscape) Left: calendar / Center: calendar (pictograms) / Right: Hub</p>
 
 ## Features
 
-- **Launch apps with keys**: Assign any app to 35 keys (letter keys, symbol keys, etc.) and tap to launch it. Long-press a key to change its assignment (in the voice build, the 0 key's long-press starts voice control instead; change its assignment from the assignment list in the settings).
+- **Launch apps with keys**: Assign any app to 34 keys (letter keys, symbol keys, etc.) and tap to launch it. Long-press a key to change its assignment (in the voice build, the 0 key's long-press starts voice control instead; change its assignment from the assignment list in the settings).
+- **Shift layer**: Tap the left Shift key to switch the 26 letter keys to a second layer (the left Shift turns blue). Assign different apps there; tap the left Shift again to return to the first layer.
 - **Function row**: Send (phone), Menu (settings), Trackpad (app list), Back, and End (go home). Send, Back and End can also be assigned to apps.
 - **Cover screen and main screen**: The layout switches as you fold and unfold. Assignments are shared between both.
 - **BB10-style screen area**: A custom status row (Wi-Fi, per-SIM signal, Bluetooth, battery), a clock with notification counts by type, a monthly calendar with dots on days that have events, and a shortcut row (flashlight, silent mode, auto-rotate, QR, camera). An icon in the status row shows when an alarm is set.

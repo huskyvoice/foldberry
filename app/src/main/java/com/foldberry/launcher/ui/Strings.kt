@@ -20,8 +20,8 @@ import com.foldberry.launcher.keyboard.KeySpec
  * 純粋層の API(KeyLayout.displayName・BackgroundPreset.label)はテストと保存形式のために変えない(多言語対応 2026-11-17)。
  */
 
-/** キーの呼び名(例「W キー」/「W key」。§7)。文言は KeyLayout.displayName と対応させる。 */
-internal fun Resources.keyName(spec: KeySpec): String = when (spec.id) {
+/** キーの呼び名(例「W キー」/「W key」。§7)。文言は KeyLayout.displayName と対応させる。Shift 面は「Shift+W キー」(D28)。 */
+internal fun Resources.keyName(spec: KeySpec, shifted: Boolean = false): String = if (shifted) getString(R.string.key_shift_name, spec.id) else when (spec.id) {
     "BACKSPACE" -> getString(R.string.key_backspace)
     "ALT" -> getString(R.string.key_alt)
     "DOLLAR" -> getString(R.string.key_dollar)
@@ -47,7 +47,7 @@ internal fun Resources.functionKeyName(key: FunctionKey): String = getString(
 
 /** 割り当て先の枠の呼び名(設定の割り当て一覧。§8)。例「W キー」「送話キー」「カメラの枠」「ホームの枠 3」「タイル 1」。 */
 internal fun Resources.slotName(slot: AssignmentSlot): String = when (slot) {
-    is AssignmentSlot.Key -> keyName(slot.spec)
+    is AssignmentSlot.Key -> keyName(slot.spec, slot.shifted)
     is AssignmentSlot.Function -> functionKeyName(slot.key)
     is AssignmentSlot.DockCamera -> getString(R.string.dock_camera_name)
     is AssignmentSlot.MainSlot -> getString(if (slot.inFolder) R.string.folder_edit_title else R.string.slot_main, slot.index + 1)

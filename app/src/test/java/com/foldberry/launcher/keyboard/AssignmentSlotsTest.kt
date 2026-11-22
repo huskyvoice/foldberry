@@ -126,6 +126,28 @@ class AssignmentSlotsTest {
     }
 
     @Test
+    fun Shift面の英字は1面目のキーの後_機能列の前に並び解除はShift面だけ外す() {
+        val g = KeyLayout.allKeys.first { it.id == "G" }
+        val a = Assignments.EMPTY
+            .withKey(FunctionKey.SEND.assignId!!, a1)
+            .withKey(KeyLayout.shiftId(g), a2)
+            .withKey("G", a1)
+            .withKey("ENTER", a1)
+        val slots = AssignmentSlots.assigned(a)
+        assertEquals(listOf("G", "ENT", "^G", "TEL"), slots.map(AssignmentBadge::label))
+        val shiftSlot = slots.first { it is AssignmentSlot.Key && it.shifted }
+        val cleared = AssignmentSlots.clear(a, shiftSlot)
+        assertEquals(null, cleared.keys[KeyLayout.shiftId(g)])
+        assertEquals(a1, cleared.keys["G"])
+    }
+
+    @Test
+    fun 左Shiftの保存キーは一覧に出さない() {
+        val a = Assignments.EMPTY.withKey(KeyLayout.SHIFT_KEY_ID, a1)
+        assertTrue(AssignmentSlots.assigned(a).isEmpty())
+    }
+
+    @Test
     fun バッジの先頭は一覧の先頭と同じ() {
         val a = Assignments.EMPTY.withKey(KeyLayout.mainSlotId(1), a1).withKey(KeyLayout.mainSlotId(0), a1).withKey("Z", a1)
         assertEquals("Z+", AssignmentBadge.of(a, a1))

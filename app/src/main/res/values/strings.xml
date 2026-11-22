@@ -43,6 +43,8 @@
 
     <!-- キーの呼び名(§7)。KeyLayout.displayName と同じ文言(純粋層はテスト用に日本語のまま持つ) -->
     <string name="key_name">%s キー</string>
+    <!-- Shift 面(2 面目)の英字キー(D28) -->
+    <string name="key_shift_name">Shift+%s キー</string>
     <string name="key_backspace">Backspace キー</string>
     <string name="key_alt">alt キー</string>
     <string name="key_dollar">$ キー</string>

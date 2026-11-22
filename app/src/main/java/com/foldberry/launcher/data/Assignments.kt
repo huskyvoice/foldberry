@@ -286,7 +286,9 @@ data class Assignments(
          * 廃止した割り当て枠の保存キー。読込みで捨てる。2026-11-18 にメインの自由枠を 12→8 個に減らした(オーナー決定。保存からも消す)。
          * data は keyboard(KeyLayout.mainSlotId)に依存しないので、キーの文字列をここで持つ。
          */
-        val RETIRED_KEYS: Set<String> = (9..12).map { "MAIN_SLOT_$it" }.toSet()
+        val RETIRED_KEYS: Set<String> = (9..12).map { "MAIN_SLOT_$it" }.toSet() +
+            // 左 Shift は 2026-11-22 に Shift 面の切替専用にした(割り当て不可。D28。KeyLayout.SHIFT_KEY_ID と同じ文字列)。
+            "LEFT_SHIFT"
 
         /** フォルダを置ける枠=メインの自由枠の保存キー(KeyLayout.mainSlotId と同じ文字列。単体テストで一致を確かめる)。 */
         val MAIN_SLOT_KEYS: Set<String> = (1..8).map { "MAIN_SLOT_$it" }.toSet()
@@ -324,7 +326,7 @@ object AssignmentsCodec {
 
     /**
      * 保存ファイルに廃止した項目・枠が残っているか: タイルの割り当て "tiles"(2026-11-19 に廃止。T1・T2 は音楽と次の予定に固定。D26)、
-     * または keys・folders に RETIRED_KEYS(2026-11-18 に廃止した自由枠 M9〜M12)がある。
+     * または keys・folders に RETIRED_KEYS(2026-11-18 に廃止した自由枠 M9〜M12、2026-11-22 に割り当て不可にした左 Shift)がある。
      * あれば起動時に 1 回だけ書き直して消す(AssignmentStore)。読めないファイルは false(書き直さない)。
      */
     fun hasRetiredEntries(text: String): Boolean = try {
@@ -358,7 +360,7 @@ object AssignmentsCodec {
             return Decoded.Invalid("未対応のバージョンです: ${parsed.version}")
         }
         // 旧ファイルのタイルの割り当て "tiles" は ignoreUnknownKeys で読み捨てる(D26。version は 1 のまま: 項目の削除は前後どちらの版でも読める)。
-        // 廃止した自由枠 M9〜M12 は捨てる(書出しファイルの読込みも同じ decode を通る)。
+        // 廃止した自由枠 M9〜M12・左 Shift は捨てる(書出しファイルの読込みも同じ decode を通る)。
         val keys = parsed.keys - Assignments.RETIRED_KEYS
         return Decoded.Ok(
             parsed.copy(

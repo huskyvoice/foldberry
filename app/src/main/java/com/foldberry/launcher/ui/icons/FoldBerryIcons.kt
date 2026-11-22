@@ -224,6 +224,9 @@ object FoldBerryIcons {
     /** 塗りのフォルダ: フォルダの中のアプリのバッジの印(§6。2026-11-18 追加)。 */
     val FolderMark: ImageVector = fill("folder_mark", 24f, Spec("M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"))
 
+    /** 塗りの Shift: Shift 面の割り当てのバッジ・キートップの印(D28。docs/mock/shift-mock.html。2026-11-22 追加)。 */
+    val ShiftMark: ImageVector = fill("shift_mark", 24f, Spec("M12 3l8.5 9H15.5v8h-7v-8H3.5z"))
+
     /** ライト: 懐中電灯。 */
     val Flashlight: ImageVector = stroke(
         "flashlight", 24f, 1.8f,

@@ -367,6 +367,8 @@ internal fun Badge(text: String, modifier: Modifier, edge: Color = ListBackgroun
     val color = if (dashed) DashedColor else if (isSlot) Color(0xFF06141B) else Color.White
     // フォルダの中(F1)は、文字の F の代わりにフォルダの印を描いて番号を添える(2026-11-18 オーナー決定)。
     val folderNumber = AssignmentBadge.folderNumber(text)
+    // Shift 面(^Q)は、^ の代わりに Shift の印を描いて英字を添える(D28)。
+    val shiftLetter = AssignmentBadge.shiftLetter(text)
     Row(
         modifier
             // 背景色の縁取りで、アイコンから浮かせる。点線の印は縁取りが点線に重なって消えるので付けない(背景色で塗るだけ)。
@@ -384,8 +386,12 @@ internal fun Badge(text: String, modifier: Modifier, edge: Color = ListBackgroun
             Image(FoldBerryIcons.FolderMark, contentDescription = null, modifier = Modifier.size(10.dp), colorFilter = ColorFilter.tint(color))
             Spacer(Modifier.width(2.dp))
         }
+        if (shiftLetter != null) {
+            Image(FoldBerryIcons.ShiftMark, contentDescription = null, modifier = Modifier.size(10.dp), colorFilter = ColorFilter.tint(color))
+            Spacer(Modifier.width(1.dp))
+        }
         BasicText(
-            folderNumber ?: text,
+            folderNumber ?: shiftLetter ?: text,
             style = TextStyle(color = color, fontSize = 11.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center),
         )
     }

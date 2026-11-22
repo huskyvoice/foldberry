@@ -19,7 +19,11 @@ sealed interface AssignmentSlot {
      */
     val isDefault: Boolean get() = false
 
-    data class Key(val spec: KeySpec, override val app: AppRef) : AssignmentSlot
+    /** @param shifted Shift 面(2 面目。保存キー KeyLayout.shiftId。英字キーだけ。D28) */
+    data class Key(val spec: KeySpec, override val app: AppRef, val shifted: Boolean = false) : AssignmentSlot {
+        /** 保存キー(Assignments.keys のキー)。 */
+        val id: String get() = if (shifted) KeyLayout.shiftId(spec) else spec.id
+    }
     data class Function(val key: FunctionKey, override val app: AppRef, override val isDefault: Boolean = false) : AssignmentSlot
     data class DockCamera(override val app: AppRef, override val isDefault: Boolean = false) : AssignmentSlot
 
@@ -33,7 +37,7 @@ sealed interface AssignmentSlot {
 
 object AssignmentSlots {
     /**
-     * 割り当て済みの枠だけを並べる。並びは キー(キーボードの並び順)→ 機能列(送話・戻る・終話)→ カバーのカメラの枠
+     * 割り当て済みの枠だけを並べる。並びは キー(キーボードの並び順)→ Shift 面の英字(同じ並び)→ 機能列(送話・戻る・終話)→ カバーのカメラの枠
      * → メインの自由枠(M1〜M8)。
      * KeyLayout に無いキー ID(手で編集したファイル等)は出さない(画面に枠が無く、変更も解除もできないため)。
      * defaults を渡すと、未割り当ての送話キー・カメラの枠に端末の既定のアプリを isDefault = true で同じ位置に入れる
@@ -41,6 +45,7 @@ object AssignmentSlots {
      */
     fun assigned(a: Assignments, defaults: DefaultApps = DefaultApps()): List<AssignmentSlot> = buildList {
         KeyLayout.assignableKeys.forEach { spec -> a.keys[spec.id]?.let { add(AssignmentSlot.Key(spec, it)) } }
+        KeyLayout.shiftableKeys.forEach { spec -> a.keys[KeyLayout.shiftId(spec)]?.let { add(AssignmentSlot.Key(spec, it, shifted = true)) } }
         KeyLayout.assignableFunctionKeys.forEach { key ->
             key.assignId?.let { id ->
                 val own = a.keys[id]
@@ -69,7 +74,7 @@ object AssignmentSlots {
      */
     fun clear(a: Assignments, slot: AssignmentSlot): Assignments = when {
         slot.isDefault -> a
-        slot is AssignmentSlot.Key -> a.withKey(slot.spec.id, null)
+        slot is AssignmentSlot.Key -> a.withKey(slot.id, null)
         slot is AssignmentSlot.Function -> slot.key.assignId?.let { a.withKey(it, null) } ?: a
         slot is AssignmentSlot.DockCamera -> a.withKey(KeyLayout.DOCK_CAMERA_ID, null)
         slot is AssignmentSlot.MainSlot && slot.inFolder -> {
