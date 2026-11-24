@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.foldberry.launcher.keyboard.FunctionKey
 import com.foldberry.launcher.keyboard.KeyLayout
+import com.foldberry.launcher.keyboard.SwipeDirection
 import com.foldberry.launcher.ui.icons.FoldBerryIcons
 
 private val FunctionRowBrush = Brush.verticalGradient(0f to Color(0xFF1C1D20), 0.6f to Color(0xFF0D0D0F), 1f to Color(0xFF050506))
@@ -35,7 +36,12 @@ private val IconColor = Color(0xFFD9DBE0)
  * BBメニューには FoldBerry 独自のマーク(アプリアイコンと同じ傾いたキー 2×2)を使う(BlackBerry のロゴは使わない)。
  */
 @Composable
-fun FunctionRow(height: Dp, onKeyTap: (FunctionKey) -> Unit = {}, onKeyLongPress: (FunctionKey) -> Unit = {}) {
+fun FunctionRow(
+    height: Dp,
+    onKeyTap: (FunctionKey) -> Unit = {},
+    onKeyLongPress: (FunctionKey) -> Unit = {},
+    onTrackpadSwipe: (SwipeDirection) -> Unit = {},
+) {
     Row(
         Modifier.fillMaxWidth().height(height).background(FunctionRowBrush).padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -47,19 +53,28 @@ fun FunctionRow(height: Dp, onKeyTap: (FunctionKey) -> Unit = {}, onKeyLongPress
                 onTap = { onKeyTap(key) },
                 // 長押し=割り当て編集は送話・戻る・終話だけ(BBメニュー・トラックパッドは固定機能)。
                 onLongPress = if (key.assignId != null) ({ onKeyLongPress(key) }) else null,
+                // 払いはトラックパッドだけ(音楽の操作。§5.3。2026-11-24)。
+                onSwipe = if (key == FunctionKey.TRACKPAD) onTrackpadSwipe else null,
             )
         }
     }
 }
 
 @Composable
-private fun FunctionKeyCell(key: FunctionKey, rowHeight: Dp, modifier: Modifier, onTap: () -> Unit, onLongPress: (() -> Unit)?) {
+private fun FunctionKeyCell(
+    key: FunctionKey,
+    rowHeight: Dp,
+    modifier: Modifier,
+    onTap: () -> Unit,
+    onLongPress: (() -> Unit)?,
+    onSwipe: ((SwipeDirection) -> Unit)?,
+) {
     val pressed = rememberPressState()
     Box(
         modifier
             .fillMaxHeight()
             // 押下判定は縮小前の座標で行う(KeyCap と同じ理由)。
-            .pressFeedback(pressed, key, onTap = onTap, onLongPress = onLongPress)
+            .pressFeedback(pressed, key, onTap = onTap, onLongPress = onLongPress, onSwipe = onSwipe)
             .graphicsLayer {
                 val s = if (pressed.value) 0.95f else 1f
                 scaleX = s

@@ -70,8 +70,8 @@ internal val SheetTextDim = Color(0xFF8B8F98)
 internal val SheetDanger = Color(0xFFE5776B)
 
 /* 案 C(BlackBerry 10 風。2026-11-17 オーナー決定。docs/mock/settings-mock.html・lists-mock.html)の線と帯の色。 */
-/** 行と行の区切り線。 */
-internal val CLine = Color(0x0FFFFFFF)
+/** 行と行の区切り線(アプリ一覧の格子も。見本の 0x0F では実機で薄いため 0x14 に。2026-11-23 オーナー指定)。 */
+internal val CLine = Color(0x14FFFFFF)
 /** 枠線(背景の見本・暗さの区切り)。 */
 internal val CFrame = Color(0x1AFFFFFF)
 /** 選択中の薄い背景。 */

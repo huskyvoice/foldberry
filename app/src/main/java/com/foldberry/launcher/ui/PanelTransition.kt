@@ -112,6 +112,8 @@ internal fun rememberBackdropBlur(open: Boolean): State<Dp> {
 internal fun GraphicsLayerScope.applyBackdropBlur(radius: State<Dp>) {
     val r = radius.value.toPx()
     renderEffect = if (r > 0f) BlurEffect(r, r) else null
+    // ぼけた絵が自分の枠の外へにじみ出さないよう切る(メイン横で右の枠のぼかしが左の本体・上のステータス行にかぶった。2026-11-23)。
+    clip = r > 0f
 }
 
 /**

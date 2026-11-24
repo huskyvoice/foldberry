@@ -30,7 +30,7 @@ private val PortraitClockHeight = 64.dp
 /**
  * メイン縦の上半分=画面(D25。2026-11-19 オーナー決定。モック docs/mock/portrait-mock.html の案 A)。
  * 上から ステータス行(画面の上端)/ 1 段の時計 / カレンダー(または Hub)4×2+自由枠 8+音楽(D26。MainHomePanel)。
- * 背景は画面部と同じ壁紙+暗い膜。アプリ一覧・フォルダはステータス行の下に重ね(ステータス行は見えたまま)、
+ * 背景は画面部と同じ壁紙+暗い膜。アプリ一覧・フォルダの暗幕は上半分全体(ステータス行も)に重ね、
  * シート類(選択待ちの帯・割り当て/フォルダ・設定)もこの上半分に出す。端末のキーボードは下半分(キー)を覆うだけになる。
  * 下半分は BerryBody(keyboardOnly)。
  */
@@ -50,30 +50,35 @@ internal fun PortraitTop(home: HomeController, modifier: Modifier) {
             // シートを開いている間は後ろ(画面と重ねた一覧)をぼかす(本体部のシートと同じ表示ギミック 5)。
             val backdropBlur = rememberBackdropBlur(home.editing != null || home.settings.showing)
             Box(Modifier.fillMaxSize().graphicsLayer { applyBackdropBlur(backdropBlur) }) {
-                ScreenBackground(assignments.background, Modifier.fillMaxSize())
-                Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = assignments.background.overlay / 100f)))
-                Column(Modifier.fillMaxSize()) {
+                // 一覧を重ねている間は画面をぼかす(一覧の下地が半透明のため。一覧自体はぼかさない)。
+                // 一覧はステータス行まで覆うので、ステータス行もぼかしの内側に置く(2026-11-24 オーナー決定)。
+                val listBlur = rememberBackdropBlur(home.mainListOpen)
+                Box(Modifier.fillMaxSize().graphicsLayer { applyBackdropBlur(listBlur) }) {
+                    ScreenBackground(assignments.background, Modifier.fillMaxSize())
+                    Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = assignments.background.overlay / 100f)))
+                    Column(Modifier.fillMaxSize().padding(top = status)) {
+                        ClockLine(now, PortraitClockHeight, assignments.clock.style, assignments.clock.hours)
+                        MainHomePanel(home, bottomInset = false, modifier = Modifier.fillMaxWidth().weight(1f), portraitScreen = true)
+                    }
                     // ステータス行が画面の上端に来るので、上端からの下払い 1 回で通知パネルが開く(§4.1)。
                     StatusRow(Modifier.fillMaxWidth().height(status))
-                    ClockLine(now, PortraitClockHeight, assignments.clock.style, assignments.clock.hours)
-                    MainHomePanel(home, bottomInset = false, modifier = Modifier.fillMaxWidth().weight(1f), portraitScreen = true)
                 }
-                // トラックパッドの一覧・自由枠のフォルダはステータス行の下に重ねる(下からスライド+フェード。途中の触れは受け止める)。
-                Box(Modifier.fillMaxSize().padding(top = status)) {
-                    AnimatedPanel(if (home.mainListOpen) Unit else null) {
-                        Box(Modifier.fillMaxSize().pointerInput(Unit) {})
-                        PanelSlide(Modifier.fillMaxSize()) {
-                            AppListPanel(
-                                home, Modifier.fillMaxSize().pointerInput(Unit) {},
-                                bottomInset = false, onClose = { home.mainListOpen = false },
-                            )
-                        }
+                // 自由枠のフォルダは暗幕をステータス行まで掛け、カードはその下の枠の中央に出す
+                // (下からスライド+フェード。途中の触れは受け止める。2026-11-24 オーナー決定)。
+                AnimatedPanel(home.openFolder) { index ->
+                    Box(Modifier.fillMaxSize().pointerInput(Unit) {})
+                    PanelSlide(Modifier.fillMaxSize()) {
+                        FolderPanel(home, index, Modifier.fillMaxSize(), topInset = status)
                     }
-                    AnimatedPanel(home.openFolder) { index ->
-                        Box(Modifier.fillMaxSize().pointerInput(Unit) {})
-                        PanelSlide(Modifier.fillMaxSize()) {
-                            FolderPanel(home, index, Modifier.fillMaxSize())
-                        }
+                }
+                // トラックパッドの一覧は上半分全体(ステータス行も含む)に重ねる(2026-11-24 オーナー決定)。
+                AnimatedPanel(if (home.mainListOpen) Unit else null) {
+                    Box(Modifier.fillMaxSize().pointerInput(Unit) {})
+                    PanelSlide(Modifier.fillMaxSize()) {
+                        AppListPanel(
+                            home, Modifier.fillMaxSize().pointerInput(Unit) {},
+                            bottomInset = false, onClose = { home.mainListOpen = false },
+                        )
                     }
                 }
             }

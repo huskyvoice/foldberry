@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.provider.MediaStore
+import android.view.KeyEvent
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -39,6 +40,7 @@ import com.foldberry.launcher.data.flipped
 import com.foldberry.launcher.keyboard.FunctionKey
 import com.foldberry.launcher.keyboard.KeyLayout
 import com.foldberry.launcher.keyboard.KeySpec
+import com.foldberry.launcher.keyboard.SwipeDirection
 import com.foldberry.launcher.layout.BodyLayout
 import com.foldberry.launcher.layout.computeBodyLayout
 import com.foldberry.launcher.layout.computeKeyboardLayout
@@ -131,7 +133,10 @@ fun BerryBody(
             val total = k?.total ?: b.total
             // 設定・割り当てシートを開いている間は後ろの本体をぼかす(表示ギミック 5)。シートは同じ Box の上に重ねるのでぼけない。
             // シートを別の場所(メイン縦の上半分)に出すときは、こちらはシートの後ろではないのでぼかさない。
-            val backdropBlur = rememberBackdropBlur(sheets && (home.editing != null || settings.showing))
+            // カバーのトラックパッドの一覧(全画面の重ね表示)を開いている間もぼかす(一覧の下地が半透明のため)。
+            val backdropBlur = rememberBackdropBlur(
+                (sheets && (home.editing != null || settings.showing)) || (cover && home.overlayOpen),
+            )
             // 下の行(§4.3)。カバーはカレンダーの下、メインは次の予定・音楽の下に置く。家の動きだけが違う。
             val cameraRef = assignments.keys[KeyLayout.DOCK_CAMERA_ID]
             val cameraName = resources.getString(R.string.dock_camera_name)
@@ -223,6 +228,15 @@ fun BerryBody(
                         val pickingNow = picking
                         if (id != null) {
                             if (pickingNow != null) assignPicked(id, resources.functionKeyName(key), pickingNow) else home.startEdit(EditTarget.Function(key))
+                        }
+                    },
+                    // トラックパッドの払いで音楽の操作(§5.3。2026-11-24 オーナー決定)。右=次の曲・左=前の曲・上=再生/一時停止・下=何もしない。
+                    onTrackpadSwipe = { dir ->
+                        when (dir) {
+                            SwipeDirection.RIGHT -> sendMediaKey(context, KeyEvent.KEYCODE_MEDIA_NEXT)
+                            SwipeDirection.LEFT -> sendMediaKey(context, KeyEvent.KEYCODE_MEDIA_PREVIOUS)
+                            SwipeDirection.UP -> sendMediaKey(context, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
+                            SwipeDirection.DOWN -> Unit
                         }
                     },
                 )

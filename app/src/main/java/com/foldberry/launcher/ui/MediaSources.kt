@@ -164,8 +164,14 @@ private fun shrink(b: Bitmap): ImageBitmap {
  * セッションが無いときの「再生」: メディアの再生キーを送る。OS が最後に再生していたアプリに届け、続きから再生する
  * (再開に対応しないアプリでは何も起きない)。権限は要らない。
  */
-fun playLastMedia(context: Context) {
+fun playLastMedia(context: Context) = sendMediaKey(context, KeyEvent.KEYCODE_MEDIA_PLAY)
+
+/**
+ * メディアキー([keyCode] は KeyEvent.KEYCODE_MEDIA_*)を押して離す。送り先は OS が選ぶ(再生中のセッション、無ければ最後に再生していたアプリ)。
+ * トラックパッドの払い(§5.3)も使う。通知へのアクセスが未許可でも動くよう、MediaController ではなくこちらで送る。
+ */
+fun sendMediaKey(context: Context, keyCode: Int) {
     val audio = context.getSystemService(AudioManager::class.java) ?: return
-    audio.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PLAY))
-    audio.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PLAY))
+    audio.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, keyCode))
+    audio.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, keyCode))
 }

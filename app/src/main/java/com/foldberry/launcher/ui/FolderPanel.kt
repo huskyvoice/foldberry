@@ -34,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.min
@@ -53,9 +54,10 @@ private val FolderShape = RoundedCornerShape(6.dp)
  * アプリのタップ=起動して閉じる、長押し=フォルダの編集シート。暗幕のタップ・×で閉じる(戻る・終話・家・開閉は HomeController)。
  *
  * @param index 自由枠の番号(0 始まり)
+ * @param topInset 暗幕だけを掛ける上端の高さ(ステータス行。カードはその下の枠の中央に置く。2026-11-24 オーナー決定)
  */
 @Composable
-fun FolderPanel(home: HomeController, index: Int, modifier: Modifier = Modifier) {
+fun FolderPanel(home: HomeController, index: Int, modifier: Modifier = Modifier, topInset: Dp = 0.dp) {
     val context = LocalContext.current
     val resources = LocalResources.current
     val app = context.applicationContext as FoldBerryApp
@@ -80,10 +82,11 @@ fun FolderPanel(home: HomeController, index: Int, modifier: Modifier = Modifier)
         )
         // 2×2 の大きなカード(モック docs/mock/folder-mock.html の開き方 C。2026-11-18 オーナー決定)。
         // 1 マスは一覧と同じ大きさ(listPageGrid)で、列の中央にそろえて左右の余白を同じにする(「右が空いている」の指摘)。
-        val grid = listPageGrid(maxWidth, maxHeight - LIST_HEADER_HEIGHT)
+        val grid = listPageGrid(maxWidth, maxHeight - topInset - LIST_HEADER_HEIGHT)
         val cell = max((maxWidth - PAGE_PADDING_H * 2) / grid.columns, MinFolderCell)
         val cardWidth = min(cell * 2 + FolderPadH * 2, maxWidth - 16.dp)
         val edit = { home.startEdit(EditTarget.Folder(index)) }
+        Box(Modifier.fillMaxSize().padding(top = topInset)) {
         Column(
             Modifier
                 .align(Alignment.Center)
@@ -121,6 +124,7 @@ fun FolderPanel(home: HomeController, index: Int, modifier: Modifier = Modifier)
                 }
             }
             Spacer(Modifier.height(8.dp))
+        }
         }
     }
 }

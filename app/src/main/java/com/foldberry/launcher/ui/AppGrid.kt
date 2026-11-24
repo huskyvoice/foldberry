@@ -77,6 +77,9 @@ import com.foldberry.launcher.layout.PageGrid
 /** 一覧の背景(BB10 風の暗色。§6)。 */
 internal val ListBackground = Color(0xFF0D1118)
 
+/** アプリ一覧の下地の不透明度(後ろのぼかした画面を透かす)。 */
+private const val LIST_BACKGROUND_ALPHA = 0.72f
+
 /**
  * アプリ一覧(仕様書 §6)。メイン構成の右半分/上半分と、カバー構成の重ね表示(トラックパッド)で共通。
  * 並び順・FoldBerry 自身の除外・インストール等での自動更新は AppCatalog 側で済んでいる。
@@ -120,7 +123,9 @@ fun AppListPanel(home: HomeController, modifier: Modifier, bottomInset: Boolean,
     // 絞り込みが変わったら 1 ページ目から(ページ数が減って今のページが無くなることがある)。
     LaunchedEffect(query) { if (query.isNotEmpty()) home.pagerState.scrollToPage(0) }
 
-    Box(modifier.background(ListBackground)) {
+    // 下地は半透明にし、後ろ(ぼかした画面)を透かす。設定・割り当てシートの背面ぼかしと同じ見せ方(2026-11-23 オーナー指定)。
+    // ぼかしは一覧を重ねる側(BerryBody・HomeScreen・PortraitTop)が掛ける。
+    Box(modifier.background(ListBackground.copy(alpha = LIST_BACKGROUND_ALPHA))) {
         // 一覧はナビゲーションバーの手前で止める(下に潜ると 3 ボタンの後ろにアイコンが透けて見づらい)。
         Column(Modifier.fillMaxSize().padding(bottom = navBottom)) {
             val shown = (catalogState as? CatalogState.Loaded)?.apps?.let { apps -> filterByName(apps, query) { it.label } }
@@ -256,12 +261,12 @@ private fun AppPage(entries: List<AppEntry>, grid: PageGrid, cell: @Composable (
         repeat(grid.rows) { r ->
             Row(Modifier.weight(1f).fillMaxWidth()) {
                 repeat(grid.columns) { c ->
-                    // 案 C: マスを細い線で区切る(右と下。最後の列は右線なし)。
+                    // 案 C: マスを細い線で区切る(右と下。最後の列は右線なし)。色は設定・割り当て一覧の行の線 CLine とそろえる(2026-11-23 オーナー指定)。
                     Box(
                         Modifier.weight(1f).fillMaxHeight().drawBehind {
                             val w = 1.dp.toPx()
-                            if (c < grid.columns - 1) drawLine(GridLine, Offset(size.width - w / 2, 0f), Offset(size.width - w / 2, size.height), w)
-                            if (r < grid.rows - 1) drawLine(GridLine, Offset(0f, size.height - w / 2), Offset(size.width, size.height - w / 2), w)
+                            if (c < grid.columns - 1) drawLine(CLine, Offset(size.width - w / 2, 0f), Offset(size.width - w / 2, size.height), w)
+                            if (r < grid.rows - 1) drawLine(CLine, Offset(0f, size.height - w / 2), Offset(size.width, size.height - w / 2), w)
                         },
                         contentAlignment = Alignment.Center,
                     ) {
@@ -306,8 +311,6 @@ private fun PageBar(entries: List<AppEntry>, count: Int, current: Int, modifier:
         }
     }
 }
-
-private val GridLine = Color(0x0CFFFFFF)
 
 /**
  * アプリ 1 つ。アイコンの右上に割り当てバッジ(キー=キートップ風、自由枠・フォルダ=アクセント色。§6・比較モックの案 E)。
