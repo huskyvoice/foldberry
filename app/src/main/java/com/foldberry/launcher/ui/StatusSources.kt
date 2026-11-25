@@ -11,6 +11,10 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.media.AudioManager
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.telephony.SignalStrength
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyCallback
@@ -146,6 +150,42 @@ fun rememberNextAlarmSet(): State<Boolean> {
             context, receiver, IntentFilter(AlarmManager.ACTION_NEXT_ALARM_CLOCK_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED,
         )
         onDispose { context.unregisterReceiver(receiver) }
+    }
+    return state
+}
+
+/**
+ * VPN に接続中か(ステータス行の継続表示「接続中」。§4.1。2026-11-25)。ACCESS_NETWORK_STATE だけで読める。
+ * 通知では見ない: 実機では OS の VPN 通知が「常時接続 VPN から切断」の警告で、Tailscale の通知は常駐フラグなしだった。
+ * 既定のネットワークではなく VPN の回線そのものを数える(分割トンネルで FoldBerry が VPN の外でも出すため)。
+ */
+@Composable
+fun rememberVpnActive(): State<Boolean> {
+    val context = LocalContext.current
+    val state = remember { mutableStateOf(false) }
+    DisposableEffect(context) {
+        val cm = context.getSystemService(ConnectivityManager::class.java)
+        val vpns = mutableSetOf<Network>()
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            // コールバックは ConnectivityManager の 1 本のスレッドで順に呼ばれる。
+            override fun onAvailable(network: Network) {
+                vpns += network
+                state.value = true
+            }
+
+            override fun onLost(network: Network) {
+                vpns -= network
+                state.value = vpns.isNotEmpty()
+            }
+        }
+        val request = NetworkRequest.Builder()
+            .addTransportType(NetworkCapabilities.TRANSPORT_VPN)
+            .removeCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+            // 既定は自分の UID が使える回線だけ。FoldBerry を外した VPN(分割トンネル)も数えるため他の UID の回線も含める。
+            .setIncludeOtherUidNetworks(true)
+            .build()
+        cm.registerNetworkCallback(request, callback)
+        onDispose { cm.unregisterNetworkCallback(callback) }
     }
     return state
 }

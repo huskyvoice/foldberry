@@ -64,6 +64,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.foldberry.launcher.R
 import com.foldberry.launcher.data.NetworkGeneration
+import com.foldberry.launcher.data.NotificationCounter
+import com.foldberry.launcher.data.OngoingKind
+import androidx.compose.runtime.collectAsState
 import com.foldberry.launcher.ui.icons.FoldBerryIcons
 
 private val StatusText = Color(0xE0FFFFFF)
@@ -112,9 +115,40 @@ fun StatusRow(modifier: Modifier, logo: Boolean = true, indicators: Boolean = tr
         // アイコン群だけのときは右寄せ(ロゴだけのときは左寄せになる)。
         horizontalArrangement = if (logo) Arrangement.SpaceBetween else Arrangement.End,
     ) {
-        if (logo) Logotype()
+        if (logo) {
+            // 継続表示はロゴの後ろ(右のアイコン群ではなく。2026-11-25 オーナー指定)。メイン横では本体側に出る。
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Logotype()
+                OngoingIndicators()
+            }
+        }
         // データ源(電池・電波・BT など)の登録はアイコン群を出す側だけで行う(左右に分けたとき 2 重に登録しない)。
         if (indicators) StatusIndicators()
+    }
+}
+
+/**
+ * ロゴの後ろに出す継続表示(消せない常駐通知。§4.1。2026-11-25)。接続中・進行中・その他の常駐を、出ている種類のアイコンだけ出す。
+ * 件数は出さない。接続中は通知(Windows にリンクなど)か VPN の回線で出す。通知へのアクセスが無ければ VPN だけ。
+ */
+@Composable
+private fun OngoingIndicators() {
+    val notices by NotificationCounter.ongoing.collectAsState()
+    val vpn by rememberVpnActive()
+    val kinds = notices.orEmpty() + (if (vpn) setOf(OngoingKind.CONNECTION) else emptySet())
+    if (kinds.isEmpty()) return
+    Row(
+        Modifier.padding(start = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+    ) {
+        OngoingKind.entries.filter { it in kinds }.forEach { kind ->
+            when (kind) {
+                OngoingKind.CONNECTION -> StatusIcon(FoldBerryIcons.Status.OngoingConnection, stringResource(R.string.status_ongoing_connection))
+                OngoingKind.ACTIVITY -> StatusIcon(FoldBerryIcons.Status.OngoingActivity, stringResource(R.string.status_ongoing_activity))
+                OngoingKind.SERVICE -> StatusIcon(FoldBerryIcons.Status.OngoingService, stringResource(R.string.status_ongoing_service))
+            }
+        }
     }
 }
 

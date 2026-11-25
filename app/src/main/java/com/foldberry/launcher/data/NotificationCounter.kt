@@ -72,6 +72,37 @@ class NotificationCounter : NotificationListenerService() {
         contentIntents = counted.associate { it.key to Opener(it.notification.contentIntent, it.notification.flags and Notification.FLAG_AUTO_CANCEL != 0) }
         mutableItems.value = items
         mutableCounts.value = HubItems.counts(items)
+        mutableOngoing.value = OngoingKinds.kinds(active.filter(::isOngoing).map(::toOngoingNotice))
+    }
+
+    /**
+     * ステータス行のロゴの後ろに出す継続表示(§4.1。2026-11-25)の対象。counts の対象とは重ならない(消せない側だけ)。
+     * 常駐(ONGOING_EVENT)かフォアグラウンドサービスの通知で、自分の通知・グループのまとめ・メディアの再生
+     * (音楽のタイルがあるため。MediaStyle は EXTRA_MEDIA_SESSION を持つ)は除く。
+     * One UI のライブ通知の印(EXTRA_SAMSUNG_ONGOING_ACTIVITY)は除かない: 時計のストップウォッチは本体の通知にこの印を付けている
+     * (2026-11-25 実機)。counts で除いている裏の通知(MediaOngoingActivity)は flags=0 なので、ここでは常駐の条件で外れる。
+     */
+    private fun isOngoing(sbn: StatusBarNotification): Boolean {
+        val n = sbn.notification
+        // Android 14 以降はフォアグラウンドサービスの通知も消せることがあり、その場合は counts 側(ベル)で数えるので二重に出さない。
+        return (sbn.isOngoing || (n.flags and Notification.FLAG_FOREGROUND_SERVICE) != 0) &&
+            !counts(sbn) &&
+            sbn.packageName != packageName &&
+            (n.flags and Notification.FLAG_GROUP_SUMMARY) == 0 &&
+            !n.extras.containsKey(Notification.EXTRA_MEDIA_SESSION)
+    }
+
+    private fun toOngoingNotice(sbn: StatusBarNotification): OngoingNotice {
+        val n = sbn.notification
+        val extras = n.extras
+        return OngoingNotice(
+            packageName = sbn.packageName,
+            channelId = n.channelId,
+            category = n.category,
+            hasProgress = extras.getInt(Notification.EXTRA_PROGRESS_MAX) > 0 || extras.getBoolean(Notification.EXTRA_PROGRESS_INDETERMINATE),
+            usesChronometer = extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER),
+            liveActivity = extras.containsKey(EXTRA_SAMSUNG_ONGOING_ACTIVITY),
+        )
     }
 
     /**
@@ -94,6 +125,7 @@ class NotificationCounter : NotificationListenerService() {
         private const val EXTRA_SAMSUNG_ONGOING_ACTIVITY = "android.ongoingActivityNoti.style"
         private val mutableCounts = MutableStateFlow<NotificationCounts?>(null)
         private val mutableItems = MutableStateFlow<List<HubItem>?>(null)
+        private val mutableOngoing = MutableStateFlow<Set<OngoingKind>?>(null)
 
         /** 通知の key → 開くための情報。recount のたびに置き換える(サービスのスレッドと画面のスレッドから読むので Volatile)。 */
         @Volatile
@@ -107,6 +139,7 @@ class NotificationCounter : NotificationListenerService() {
             contentIntents = emptyMap()
             mutableItems.value = null
             mutableCounts.value = null
+            mutableOngoing.value = null
         }
 
         /** 種類別の通知数。未許可・未接続なら null。 */
@@ -114,6 +147,9 @@ class NotificationCounter : NotificationListenerService() {
 
         /** Hub(§4.6)に出す通知の一覧(並びは未整理。HubItems.filter で新しい順にする)。未許可・未接続なら null。 */
         val items: StateFlow<List<HubItem>?> = mutableItems.asStateFlow()
+
+        /** ステータス行に出す継続表示の種類(§4.1)。未許可・未接続なら null。VPN は含まない(回線から見る)。 */
+        val ongoing: StateFlow<Set<OngoingKind>?> = mutableOngoing.asStateFlow()
 
         /**
          * Hub の通知を開く(通知パネルで押したのと同じく、通知の contentIntent を送る)。

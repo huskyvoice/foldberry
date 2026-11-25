@@ -271,6 +271,9 @@
     </plurals>
     <!-- 音楽・次の予定・アラーム(D26。2026-11-19) -->
     <string name="status_alarm">アラームを設定中</string>
+    <string name="status_ongoing_connection">接続中(VPN など)</string>
+    <string name="status_ongoing_activity">進行中の操作あり</string>
+    <string name="status_ongoing_service">常駐中のアプリあり</string>
     <string name="events_title">次の予定</string>
     <string name="events_none">今日と明日の予定はありません</string>
     <string name="events_tomorrow">明日 %s</string>

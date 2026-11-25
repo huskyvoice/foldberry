@@ -42,6 +42,13 @@ object FoldBerryIcons {
     private val SILENT_PATHS = arrayOf(*BELL_PATHS, "M3 3l18 18")
     /** アラーム: 文字盤(時計の線画 Line.Clock と同じ針)と左右の小さなベル(ステータス行。D26。2026-11-19)。 */
     private val ALARM_PATHS = arrayOf("M20 13a8 8 0 1 1-16 0a8 8 0 1 1 16 0z", "M12 9v4l3 2", "M3.5 6.5l3-3", "M20.5 6.5l-3-3")
+    /* ステータス行の継続表示(§4.1。2026-11-25。docs/mock/ongoing-mock.html の 接続中 B・進行中 C・常駐 C)。 */
+    /** 接続中: 丸い頭の鍵。 */
+    private val ONGOING_CONNECTION_PATHS = arrayOf("M11.5 15.5a4 4 0 1 1-8 0a4 4 0 1 1 8 0z", "M10.4 12.6L19 4", "M15.5 7.5l2.5 2.5", "M17.5 5.5l2 2")
+    /** 進行中: 一部が欠けた円と再生の三角。 */
+    private val ONGOING_ACTIVITY_PATHS = arrayOf("M12 4a8 8 0 1 1-8 8", "M10 9v6l5-3z")
+    /** その他の常駐: ピン。 */
+    private val ONGOING_SERVICE_PATHS = arrayOf("M9 3h6l-1 6 3 3v2H7v-2l3-3z", "M12 14v7")
     /** 音楽: 八分音符(音楽のタイルの案内。D26)。 */
     private val MUSIC_PATHS = arrayOf("M9 18V5l11-2v13", "M9 18a3 3 0 1 1-6 0a3 3 0 1 1 6 0z", "M20 16a3 3 0 1 1-6 0a3 3 0 1 1 6 0z")
     private const val CHARGING_PATH = "M13.5 1.5L4.5 13.5h6l-1.5 9 9-12h-6z"
@@ -130,6 +137,18 @@ object FoldBerryIcons {
         /** 次のアラームの設定あり(D26)。中身は x 3.5〜20.5・y 3.5〜21(高さ 17.5)→ 線 1.3 × 17.5 / 9.7 = 2.345。 */
         val Alarm: ImageVector = cropped("st_alarm", 2.33f, 2.33f, 19.35f, 19.85f) { b ->
             ALARM_PATHS.forEach { b.strokePath(it, 2.345f) }
+        }
+        /** 継続表示の接続中(§4.1)。中身は x 3.5〜19.5・y 4〜19.5(高さ 15.5)→ 線 1.3 × 15.5 / 9.7 = 2.077。 */
+        val OngoingConnection: ImageVector = cropped("st_ongoing_connection", 2.46f, 2.96f, 18.08f, 17.58f) { b ->
+            ONGOING_CONNECTION_PATHS.forEach { b.strokePath(it, 2.077f) }
+        }
+        /** 継続表示の進行中(§4.1)。中身は x・y とも 4〜20(高さ 16)→ 線 1.3 × 16 / 9.7 = 2.144。 */
+        val OngoingActivity: ImageVector = cropped("st_ongoing_activity", 2.93f, 2.93f, 18.14f, 18.14f) { b ->
+            ONGOING_ACTIVITY_PATHS.forEach { b.strokePath(it, 2.144f) }
+        }
+        /** 継続表示のその他の常駐(§4.1)。中身は x 7〜17・y 3〜21(高さ 18)→ 線 1.3 × 18 / 9.7 = 2.412。 */
+        val OngoingService: ImageVector = cropped("st_ongoing_service", 5.79f, 1.79f, 12.41f, 20.41f) { b ->
+            ONGOING_SERVICE_PATHS.forEach { b.strokePath(it, 2.412f) }
         }
         /**
          * 充電中の稲妻の輪郭。原点を左上へ詰めた 13.5×21 の枠(縦横比 [CHARGING_ASPECT])。
