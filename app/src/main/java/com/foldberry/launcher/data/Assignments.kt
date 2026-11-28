@@ -194,9 +194,27 @@ enum class HubPreview(val id: String) {
 }
 
 /**
+ * 通知の知らせ方(§4.2 / §5.3 / §8。2026-11-28 オーナー指定)。時計の日付の右端の件数と、トラックパッドの青い明滅。id は保存に使う。
+ */
+enum class NotificationIndicator(val id: String, val showsClock: Boolean, val showsTrackpad: Boolean) {
+    /** 時計の横の件数だけ(既定。追加前と同じ見た目)。 */
+    CLOCK("clock", showsClock = true, showsTrackpad = false),
+    TRACKPAD("trackpad", showsClock = false, showsTrackpad = true),
+    BOTH("both", showsClock = true, showsTrackpad = true),
+    ;
+
+    companion object {
+        val DEFAULT = CLOCK
+
+        fun resolve(id: String): NotificationIndicator = entries.firstOrNull { it.id == id } ?: DEFAULT
+    }
+}
+
+/**
  * メインの枠と Hub の設定(§4.5 / §4.6 / §8。v0.7.0 で追加)。
  * @param mainPanel メインの一覧の枠の 4×2 マスに出す部品(MainPanelKind.id)
  * @param preview Hub の本文の出し方(HubPreview.id)
+ * @param indicator 通知の知らせ方(NotificationIndicator.id。2026-11-28 追加)。通知まわりの設定なのでここに置く。無いファイルは既定(時計の横)
  */
 @Serializable
 data class HubSetting(
@@ -204,13 +222,16 @@ data class HubSetting(
     val preview: String = HubPreview.DEFAULT.id,
     /** カバーのタイル部(§4.3.1)に出す部品(MainPanelKind.id)。メインとは別に覚える(v0.7.3。2026-11-18 オーナー決定)。 */
     val coverPanel: String = MainPanelKind.DEFAULT.id,
+    val indicator: String = NotificationIndicator.DEFAULT.id,
 ) {
     val panel: MainPanelKind get() = MainPanelKind.resolve(mainPanel)
     val cover: MainPanelKind get() = MainPanelKind.resolve(coverPanel)
     val previewMode: HubPreview get() = HubPreview.resolve(preview)
+    val indicatorMode: NotificationIndicator get() = NotificationIndicator.resolve(indicator)
 
     /** 未知の値を既定に丸める(読込み時に通す)。 */
-    fun normalized(): HubSetting = HubSetting(mainPanel = panel.id, preview = previewMode.id, coverPanel = cover.id)
+    fun normalized(): HubSetting =
+        HubSetting(mainPanel = panel.id, preview = previewMode.id, coverPanel = cover.id, indicator = indicatorMode.id)
 }
 
 /** カレンダー ⇔ Hub の入れ替え(枠の見出しの下払い・設定の行。§4.5 / §4.3.1)。 */

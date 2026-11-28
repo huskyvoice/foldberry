@@ -55,6 +55,7 @@ import com.foldberry.launcher.data.BackgroundSetting
 import com.foldberry.launcher.data.ClockText
 import com.foldberry.launcher.data.DateStyle
 import com.foldberry.launcher.data.HourFormat
+import com.foldberry.launcher.data.NotificationIndicator
 import com.foldberry.launcher.data.HubPreview
 import com.foldberry.launcher.data.IconStyle
 import com.foldberry.launcher.data.ImportResult
@@ -124,6 +125,8 @@ fun SettingsSheet(
     onSelectMainPanel: (MainPanelKind) -> Unit,
     onSelectCoverPanel: (MainPanelKind) -> Unit,
     onSelectHubPreview: (HubPreview) -> Unit,
+    notificationIndicator: NotificationIndicator,
+    onSelectNotificationIndicator: (NotificationIndicator) -> Unit,
     onSelectPreset: (BackgroundPreset) -> Unit,
     onSelectLanguage: (String) -> Unit,
     onSelectDateStyle: (DateStyle) -> Unit,
@@ -219,6 +222,10 @@ fun SettingsSheet(
                 stringResource(if (notificationAllowed) R.string.notif_access_on else R.string.notif_access_off),
                 onClick = onNotificationAccess,
             ) { CChevron() }
+            // 通知の知らせ方(2026-11-28)。行のタップで 時計の横 → トラックパッド → 両方 の順送り。
+            CRow(FoldBerryIcons.Line.Bell, stringResource(R.string.notif_indicator_title), stringResource(R.string.notif_indicator_desc), onClick = {
+                onSelectNotificationIndicator(NotificationIndicator.entries.next(notificationIndicator))
+            }) { CValue(stringResource(notificationIndicator.labelRes())) }
             CRow(FoldBerryIcons.Line.Signal, stringResource(R.string.perm_title), stringResource(R.string.perm_desc), onClick = onAppPermissions) { CChevron() }
 
             CSectionTitle(stringResource(R.string.section_system))

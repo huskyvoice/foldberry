@@ -10,6 +10,7 @@ import com.foldberry.launcher.data.HubPreview
 import com.foldberry.launcher.data.IconStyle
 import com.foldberry.launcher.data.MainPanelKind
 import com.foldberry.launcher.data.NameGroup
+import com.foldberry.launcher.data.NotificationIndicator
 import com.foldberry.launcher.data.Pictogram
 import com.foldberry.launcher.keyboard.AssignmentSlot
 import com.foldberry.launcher.keyboard.FunctionKey
@@ -102,6 +103,12 @@ internal fun HubPreview.labelRes(): Int = when (this) {
     HubPreview.FULL -> R.string.hub_preview_full
     HubPreview.SENDER -> R.string.hub_preview_sender
     HubPreview.APP -> R.string.hub_preview_app
+}
+
+internal fun NotificationIndicator.labelRes(): Int = when (this) {
+    NotificationIndicator.CLOCK -> R.string.notif_indicator_clock
+    NotificationIndicator.TRACKPAD -> R.string.notif_indicator_trackpad
+    NotificationIndicator.BOTH -> R.string.notif_indicator_both
 }
 
 /** 割り当てアイコンの出し方の名前(設定シートの選択肢。§5.2)。 */

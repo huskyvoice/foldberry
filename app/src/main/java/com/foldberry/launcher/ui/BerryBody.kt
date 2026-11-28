@@ -37,6 +37,7 @@ import com.foldberry.launcher.R
 import com.foldberry.launcher.data.AppEntry
 import com.foldberry.launcher.data.AppRef
 import com.foldberry.launcher.data.flipped
+import com.foldberry.launcher.data.NotificationCounter
 import com.foldberry.launcher.keyboard.FunctionKey
 import com.foldberry.launcher.keyboard.KeyLayout
 import com.foldberry.launcher.keyboard.KeySpec
@@ -110,6 +111,10 @@ fun BerryBody(
     val assignments by app.store.state.collectAsState()
     val settings = home.settings
     val picking = home.pickingApp
+    // 通知の知らせ方(2026-11-28): トラックパッドを選んでいて通知が 1 件以上あれば明滅させる。未許可(null)は 0 件と同じ。
+    val notificationCounts by NotificationCounter.counts.collectAsState()
+    val indicator = assignments.hub.indicatorMode
+    val trackpadLit = indicator.showsTrackpad && (notificationCounts?.total ?: 0) > 0
 
     fun toast(text: String) = Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
 
@@ -202,9 +207,11 @@ fun BerryBody(
                         { Dock(home.mainCalendarMonth == null, stringResource(R.string.quick_home)) { home.goHome() } }
                     },
                     statusIndicators = statusIndicators,
+                    clockNotifications = indicator.showsClock,
                 )
                 FunctionRow(
                     functionRowHeight.dp,
+                    trackpadLit = trackpadLit,
                     // 機能列 5 キー(§5.3)。送話・戻る・終話は、選択待ちなら割り当て、割り当て済みなら起動、
                     // 未割り当てなら固定機能(2026-11-17 オーナー決定)。
                     onKeyTap = { key ->

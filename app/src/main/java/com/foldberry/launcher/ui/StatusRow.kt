@@ -78,9 +78,12 @@ private val StatusText = Color(0xE0FFFFFF)
  *
  * メイン横向きでは、本体側は [logo] だけ、右の枠の上端は [indicators] だけにして左右で 1 本に見せる
  * (帯はヒンジで分かれるので折り目をまたがない §3.3。2026-11-18 オーナー決定)。
+ *
+ * @param musicPlaying 音楽の再生中に継続表示へ音符を出すか(カバー画面だけ true。音楽のタイルが無く、
+ *   トラックパッドで操作しても再生中か分からないため。2026-11-26 オーナー要望)
  */
 @Composable
-fun StatusRow(modifier: Modifier, logo: Boolean = true, indicators: Boolean = true) {
+fun StatusRow(modifier: Modifier, logo: Boolean = true, indicators: Boolean = true, musicPlaying: Boolean = false) {
     val openPanel = rememberOpenNotificationPanel()
     val swipeThreshold = with(LocalDensity.current) { SwipeOpenThreshold.toPx() }
     // 行のタップ・行からの下スワイプで通知パネルを開く(§4.1 / U5。2026-11-18 追加)。
@@ -119,7 +122,7 @@ fun StatusRow(modifier: Modifier, logo: Boolean = true, indicators: Boolean = tr
             // 継続表示はロゴの後ろ(右のアイコン群ではなく。2026-11-25 オーナー指定)。メイン横では本体側に出る。
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Logotype()
-                OngoingIndicators()
+                OngoingIndicators(musicPlaying)
             }
         }
         // データ源(電池・電波・BT など)の登録はアイコン群を出す側だけで行う(左右に分けたとき 2 重に登録しない)。
@@ -130,18 +133,23 @@ fun StatusRow(modifier: Modifier, logo: Boolean = true, indicators: Boolean = tr
 /**
  * ロゴの後ろに出す継続表示(消せない常駐通知。§4.1。2026-11-25)。接続中・進行中・その他の常駐を、出ている種類のアイコンだけ出す。
  * 件数は出さない。接続中は通知(Windows にリンクなど)か VPN の回線で出す。通知へのアクセスが無ければ VPN だけ。
+ * [musicPlaying] のときは再生中(一時停止中は出さない)の音符を先頭に出す。メディアの通知は継続表示の振り分けから
+ * 除いているので(NotificationCounter.isOngoing)、通知ではなく音楽のタイルと同じセッションの状態で見る。
  */
 @Composable
-private fun OngoingIndicators() {
+private fun OngoingIndicators(musicPlaying: Boolean) {
     val notices by NotificationCounter.ongoing.collectAsState()
     val vpn by rememberVpnActive()
     val kinds = notices.orEmpty() + (if (vpn) setOf(OngoingKind.CONNECTION) else emptySet())
-    if (kinds.isEmpty()) return
+    // musicPlaying は StatusRow の置き場所ごとに固定なので、条件付きで呼んでも呼び出しの並びは変わらない。
+    val playing = musicPlaying && (rememberMediaInfo().value as? MediaInfo.Active)?.playing == true
+    if (kinds.isEmpty() && !playing) return
     Row(
         Modifier.padding(start = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(5.dp),
     ) {
+        if (playing) StatusIcon(FoldBerryIcons.Status.MusicPlaying, stringResource(R.string.status_music_playing))
         OngoingKind.entries.filter { it in kinds }.forEach { kind ->
             when (kind) {
                 OngoingKind.CONNECTION -> StatusIcon(FoldBerryIcons.Status.OngoingConnection, stringResource(R.string.status_ongoing_connection))

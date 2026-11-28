@@ -145,6 +145,8 @@ internal fun HomeSheets(home: HomeController, topInset: Dp) {
             onSelectCoverPanel = settings::setCoverPanel,
             hubPreview = assignments.hub.previewMode,
             onSelectHubPreview = settings::setHubPreview,
+            notificationIndicator = assignments.hub.indicatorMode,
+            onSelectNotificationIndicator = settings::setNotificationIndicator,
             onHomeSettings = settings::openHomeSettings,
             // 許可画面から戻ったとき(MainActivity.onResume が合図を進める)に読み直す。
             notificationAllowed = remember(permissionTick) { NotificationCounter.isAllowed(context) },

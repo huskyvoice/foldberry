@@ -61,12 +61,20 @@ internal fun rememberClockLanguage(): ClockLanguage =
  * 画面部の大時計(仕様書 §4.2)。時:分と日付・曜日。12/24 時間表記は設定(hourFormat。既定は端末の設定に従う。v0.6.0)。
  * 日付・曜日・午前/午後は画面の言語で、日付の書式は設定(dateStyle)で出す(2026-11-17 改訂。旧: 英語に固定)。
  * 日付の行の右端に種類別の通知数を出す(NotificationBadges。2026-11-17 追加)。
+ * showNotifications=false(設定の通知の知らせ方がトラックパッドだけ。2026-11-28)なら出さず、件数の行の高さも取らない。
  * 左半分のタップで端末の時計アプリを開く(固定機能、割り当て対象外)。
  *
  * @param height 時計の領域の高さ。文字の大きさはここから決める(端末の文字サイズ設定には左右されない)。
  */
 @Composable
-fun ClockBlock(now: LocalDateTime, height: Dp, dateStyle: DateStyle, hourFormat: HourFormat, modifier: Modifier = Modifier) {
+fun ClockBlock(
+    now: LocalDateTime,
+    height: Dp,
+    dateStyle: DateStyle,
+    hourFormat: HourFormat,
+    modifier: Modifier = Modifier,
+    showNotifications: Boolean = true,
+) {
     val density = LocalDensity.current
     val (time, ampm, date) = rememberClockText(now, dateStyle, hourFormat)
 
@@ -94,7 +102,7 @@ fun ClockBlock(now: LocalDateTime, height: Dp, dateStyle: DateStyle, hourFormat:
                 style = TextStyle(color = Color(0xC8FFFFFF), fontSize = subSize, fontWeight = FontWeight.Light),
                 maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
-            notifications?.let { NotificationBadges(it, iconSize = height * 0.19f, modifier = Modifier.padding(start = 8.dp)) }
+            notifications?.takeIf { showNotifications }?.let { NotificationBadges(it, iconSize = height * 0.19f, modifier = Modifier.padding(start = 8.dp)) }
         }
     }
 }
@@ -106,7 +114,14 @@ fun ClockBlock(now: LocalDateTime, height: Dp, dateStyle: DateStyle, hourFormat:
  * @param height 行の高さ。時刻の文字はこの 0.68 倍
  */
 @Composable
-fun ClockLine(now: LocalDateTime, height: Dp, dateStyle: DateStyle, hourFormat: HourFormat, modifier: Modifier = Modifier) {
+fun ClockLine(
+    now: LocalDateTime,
+    height: Dp,
+    dateStyle: DateStyle,
+    hourFormat: HourFormat,
+    modifier: Modifier = Modifier,
+    showNotifications: Boolean = true,
+) {
     val density = LocalDensity.current
     val (time, ampm, date) = rememberClockText(now, dateStyle, hourFormat)
     val timeSize = with(density) { (height * 0.68f).toSp() }
@@ -132,7 +147,7 @@ fun ClockLine(now: LocalDateTime, height: Dp, dateStyle: DateStyle, hourFormat: 
         )
         // 日付の右に次の予定 2 行(D26)。残りの幅に合わせて 件名 → 時刻だけ → 出さない の順に縮める。
         NextEventsLines(now, hourFormat, Modifier.weight(1f))
-        notifications?.let { NotificationBadges(it, iconSize = height * 0.3f, modifier = Modifier.padding(start = 8.dp)) }
+        notifications?.takeIf { showNotifications }?.let { NotificationBadges(it, iconSize = height * 0.3f, modifier = Modifier.padding(start = 8.dp)) }
     }
 }
 

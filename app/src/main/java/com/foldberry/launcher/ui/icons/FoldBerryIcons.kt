@@ -150,6 +150,10 @@ object FoldBerryIcons {
         val OngoingService: ImageVector = cropped("st_ongoing_service", 5.79f, 1.79f, 12.41f, 20.41f) { b ->
             ONGOING_SERVICE_PATHS.forEach { b.strokePath(it, 2.412f) }
         }
+        /** 音楽の再生中(カバー画面だけ。§4.1)。音楽のタイルと同じ音符。中身は x 3〜20・y 3〜21(高さ 18)→ 線 1.3 × 18 / 9.7 = 2.412。 */
+        val MusicPlaying: ImageVector = cropped("st_music_playing", 1.79f, 1.79f, 19.41f, 20.41f) { b ->
+            MUSIC_PATHS.forEach { b.strokePath(it, 2.412f) }
+        }
         /**
          * 充電中の稲妻の輪郭。原点を左上へ詰めた 13.5×21 の枠(縦横比 [CHARGING_ASPECT])。
          * 電池の中に重ねて描くので ImageVector ではなく Path で渡す(まわりを抜くのに輪郭が要る。2026-11-18 オーナー要望)。

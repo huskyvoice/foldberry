@@ -240,6 +240,11 @@
     <string name="hub_preview_full">Sender and text</string>
     <string name="hub_preview_sender">Sender only</string>
     <string name="hub_preview_app">App name only</string>
+    <string name="notif_indicator_title">Notification alert</string>
+    <string name="notif_indicator_desc">Counts by the clock, or a blinking blue trackpad</string>
+    <string name="notif_indicator_clock">Counts only</string>
+    <string name="notif_indicator_trackpad">Trackpad</string>
+    <string name="notif_indicator_both">Both</string>
     <string name="hub_body_new">New</string>
     <string name="hub_body_hidden">1 notification</string>
     <string name="hub_empty">No new notifications</string>
@@ -275,6 +280,7 @@
     <string name="status_ongoing_connection">Connected (VPN, etc.)</string>
     <string name="status_ongoing_activity">Activity in progress</string>
     <string name="status_ongoing_service">Apps running in background</string>
+    <string name="status_music_playing">Music playing</string>
     <string name="events_title">Up next</string>
     <string name="events_none">No events today or tomorrow</string>
     <string name="events_tomorrow">Tomorrow %s</string>

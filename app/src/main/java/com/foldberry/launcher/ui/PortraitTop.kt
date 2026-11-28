@@ -57,7 +57,10 @@ internal fun PortraitTop(home: HomeController, modifier: Modifier) {
                     ScreenBackground(assignments.background, Modifier.fillMaxSize())
                     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = assignments.background.overlay / 100f)))
                     Column(Modifier.fillMaxSize().padding(top = status)) {
-                        ClockLine(now, PortraitClockHeight, assignments.clock.style, assignments.clock.hours)
+                        ClockLine(
+                            now, PortraitClockHeight, assignments.clock.style, assignments.clock.hours,
+                            showNotifications = assignments.hub.indicatorMode.showsClock,
+                        )
                         MainHomePanel(home, bottomInset = false, modifier = Modifier.fillMaxWidth().weight(1f), portraitScreen = true)
                     }
                     // ステータス行が画面の上端に来るので、上端からの下払い 1 回で通知パネルが開く(§4.1)。

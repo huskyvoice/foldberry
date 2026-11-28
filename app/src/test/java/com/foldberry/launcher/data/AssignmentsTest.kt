@@ -370,6 +370,27 @@ class AssignmentsTest {
     }
 
     @Test
+    fun 通知の知らせ方は無いファイルは時計の横で読み書きで保たれ未知は既定() {
+        val old = AssignmentsCodec.decode("""{"version":1,"hub":{"mainPanel":"hub"}}""") as AssignmentsCodec.Decoded.Ok
+        assertEquals(NotificationIndicator.CLOCK, old.value.hub.indicatorMode)
+        val a = Assignments.EMPTY.copy(hub = HubSetting(indicator = NotificationIndicator.TRACKPAD.id))
+        assertEquals(AssignmentsCodec.Decoded.Ok(a), AssignmentsCodec.decode(AssignmentsCodec.encode(a)))
+        val odd = AssignmentsCodec.decode("""{"version":1,"hub":{"indicator":"led"}}""") as AssignmentsCodec.Decoded.Ok
+        assertEquals(NotificationIndicator.CLOCK.id, odd.value.hub.indicator)
+        assertEquals(NotificationIndicator.CLOCK, a.resetSettings().hub.indicatorMode)
+    }
+
+    @Test
+    fun 通知の知らせ方ごとに時計とトラックパッドのどちらに出すか() {
+        assertTrue(NotificationIndicator.CLOCK.showsClock)
+        assertFalse(NotificationIndicator.CLOCK.showsTrackpad)
+        assertFalse(NotificationIndicator.TRACKPAD.showsClock)
+        assertTrue(NotificationIndicator.TRACKPAD.showsTrackpad)
+        assertTrue(NotificationIndicator.BOTH.showsClock)
+        assertTrue(NotificationIndicator.BOTH.showsTrackpad)
+    }
+
+    @Test
     fun カレンダーとHubの入れ替え() {
         assertEquals(MainPanelKind.HUB, MainPanelKind.CALENDAR.flipped())
         assertEquals(MainPanelKind.CALENDAR, MainPanelKind.HUB.flipped())

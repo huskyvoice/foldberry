@@ -241,6 +241,11 @@
     <string name="hub_preview_full">差出人と本文</string>
     <string name="hub_preview_sender">差出人だけ</string>
     <string name="hub_preview_app">アプリ名だけ</string>
+    <string name="notif_indicator_title">通知の知らせ方</string>
+    <string name="notif_indicator_desc">時計の横の件数か、トラックパッドの青い明滅か</string>
+    <string name="notif_indicator_clock">通知のみ</string>
+    <string name="notif_indicator_trackpad">トラックパッド</string>
+    <string name="notif_indicator_both">両方</string>
     <string name="hub_body_new">新着</string>
     <string name="hub_body_hidden">1 件の通知</string>
     <string name="hub_empty">新しい通知はありません</string>
@@ -274,6 +279,7 @@
     <string name="status_ongoing_connection">接続中(VPN など)</string>
     <string name="status_ongoing_activity">進行中の操作あり</string>
     <string name="status_ongoing_service">常駐中のアプリあり</string>
+    <string name="status_music_playing">音楽を再生中</string>
     <string name="events_title">次の予定</string>
     <string name="events_none">今日と明日の予定はありません</string>
     <string name="events_tomorrow">明日 %s</string>

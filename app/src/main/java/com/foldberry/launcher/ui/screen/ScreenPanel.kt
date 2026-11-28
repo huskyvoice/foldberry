@@ -35,6 +35,7 @@ import java.time.LocalDate
  * @param coverArea カバー画面のタイル部(今日を受け取る)。null なら次の予定と音楽を出す
  * @param mainDock メイン画面で音楽の下に置く下の行(null なら置かない)
  * @param statusIndicators ステータス行の右のアイコン群を出すか(メイン横向きでは右の枠の上端へ移すので false。2026-11-18)
+ * @param clockNotifications 時計の日付の右端に通知数を出すか(設定の通知の知らせ方。2026-11-28)
  */
 @Composable
 fun ScreenPanel(
@@ -47,6 +48,7 @@ fun ScreenPanel(
     mainDock: (@Composable () -> Unit)?,
     modifier: Modifier = Modifier,
     statusIndicators: Boolean = true,
+    clockNotifications: Boolean = true,
 ) {
     // 時計とカバーのカレンダーで「今」を共有する(日付の変わり目も同時に切り替わる)。
     val now by rememberNow()
@@ -55,10 +57,11 @@ fun ScreenPanel(
         // 時計とタイルを読みやすくする暗い膜(§4.4)。
         Box(Modifier.fillMaxWidth().height(height).background(Color.Black.copy(alpha = background.overlay / 100f)))
         Column(Modifier.fillMaxWidth().height(height)) {
-            StatusRow(Modifier.fillMaxWidth().height(statusHeight), indicators = statusIndicators)
+            // カバー(coverArea あり)には音楽のタイルが無いので、再生中をステータス行の音符で知らせる(2026-11-26)。
+            StatusRow(Modifier.fillMaxWidth().height(statusHeight), indicators = statusIndicators, musicPlaying = coverArea != null)
             // 時計の高さは画面部に合わせて伸縮(メイン縦向きの低い画面部でも収まるように)。
             val clockHeight = ((height - statusHeight) * 0.3f).coerceIn(statusHeight * 1.6f, statusHeight * 4.6f)
-            ClockBlock(now, clockHeight, dateStyle, hourFormat)
+            ClockBlock(now, clockHeight, dateStyle, hourFormat, showNotifications = clockNotifications)
             if (coverArea != null) {
                 coverArea(now.toLocalDate(), Modifier.weight(1f))
             } else {

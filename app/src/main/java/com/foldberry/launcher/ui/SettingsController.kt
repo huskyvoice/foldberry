@@ -30,6 +30,7 @@ import com.foldberry.launcher.data.BackgroundSetting
 import com.foldberry.launcher.data.CatalogState
 import com.foldberry.launcher.data.DateStyle
 import com.foldberry.launcher.data.HourFormat
+import com.foldberry.launcher.data.NotificationIndicator
 import com.foldberry.launcher.data.HubPreview
 import com.foldberry.launcher.data.IconStyle
 import com.foldberry.launcher.data.ImportResult
@@ -116,6 +117,10 @@ class SettingsController internal constructor(
 
     /** Hub の本文の出し方(§4.6 / §8)。即時保存。 */
     fun setHubPreview(preview: HubPreview) = store.update { it.copy(hub = it.hub.copy(preview = preview.id)) }
+
+    /** 通知の知らせ方(時計の横の件数/トラックパッドの明滅/両方。§8。2026-11-28)。即時保存。 */
+    fun setNotificationIndicator(indicator: NotificationIndicator) =
+        store.update { it.copy(hub = it.hub.copy(indicator = indicator.id)) }
 
     /** 端末の写真から背景を選ぶ(標準の写真選択画面。ストレージ権限なし)。 */
     fun pickPhoto() = onPickPhoto()
